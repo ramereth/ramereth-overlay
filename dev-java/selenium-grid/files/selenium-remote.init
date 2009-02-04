@@ -1,0 +1,26 @@
+#!/sbin/runscript
+
+depend() {
+    need net
+}
+
+start() {
+	ebegin "Starting selenium-remote"
+	start-stop-daemon --start --quiet --exec /usr/sbin/selenium-remote \
+                --background --chuid selenium:selenium \
+                --pidfile /var/run/selenium-remote.pid -m \
+                -- ${SELENIUM_REMOTE_OPTS}
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping selenium-remote"
+	start-stop-daemon --stop --quiet --exec /usr/sbin/selenium-remote \
+                --pid-file=/var/run/selenium-remote.pid
+    if [ -e /var/run/selenium-remote.pid ] ; then
+        eerror "selenium-remote didn't stop cleanly!"
+        eerror "Issuing a kill -9 ..."
+        kill -9 $(cat /var/run/selenium-remote.pid)
+    fi
+	eend $?
+}

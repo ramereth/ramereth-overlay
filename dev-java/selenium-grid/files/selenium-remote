@@ -1,0 +1,4 @@
+#!/bin/bash
+cd /usr/share/selenium-grid
+trap 'kill -s HUP 0' 0
+/usr/bin/ruby -S rake rc:start_all ${@}

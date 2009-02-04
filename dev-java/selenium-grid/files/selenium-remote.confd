@@ -1,0 +1,14 @@
+# /etc/conf.d/selenium-remote
+#
+# Look in /usr/share/selenium-grid/Rakefile for more options
+
+# Default options 
+PORTS="5000-5009"
+ENVIRONMENT="*chrome"
+HOST="${HOSTNAME}"
+HUB_URL="http://localhost:4444"
+
+SELENIUM_REMOTE_OPTS="PORTS=\"${PORTS}\" \
+        ENVIRONMENT=\"${ENVIRONMENT}\" \
+        HOST=\"${HOST}\" \
+        HUB_URL=\"${HUB_URL}\""
