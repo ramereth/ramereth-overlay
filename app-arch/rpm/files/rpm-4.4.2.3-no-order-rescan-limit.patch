@@ -1,0 +1,25 @@
+diff -up rpm-4.4.2.3-rc1/lib/depends.c.no-limit rpm-4.4.2.3-rc1/lib/depends.c
+--- rpm-4.4.2.3-rc1/lib/depends.c.no-limit	2008-03-12 08:40:08.000000000 +0200
++++ rpm-4.4.2.3-rc1/lib/depends.c	2008-03-12 08:58:15.000000000 +0200
+@@ -1229,7 +1229,7 @@ int rpmtsOrder(rpmts ts)
+     int numOrderList;
+     int npeer = 128;	/* XXX more than deep enough for now. */
+     int * peer = memset(alloca(npeer*sizeof(*peer)), 0, (npeer*sizeof(*peer)));
+-    int nrescans = 10;
++    int nrescans = 0;
+     int _printed = 0;
+     char deptypechar;
+     size_t tsbytes;
+@@ -1563,8 +1563,10 @@ rescan:
+ 
+ 	/* If a relation was eliminated, then continue sorting. */
+ 	/* XXX TODO: add control bit. */
+-	if (nzaps && nrescans-- > 0) {
+-	    rpmMessage(RPMMESS_DEBUG, _("========== continuing tsort ...\n"));
++	if (nzaps > 0) {
++	    rpmMessage(RPMMESS_DEBUG, 
++		       _("========== continuing tsort ... (rescan %d)\n"),
++		       ++nrescans);
+ 	    goto rescan;
+ 	}
+ 

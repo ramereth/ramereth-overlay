@@ -1,0 +1,21 @@
+diff -ur yum.old/rpmsack.py yum/rpmsack.py
+--- yum.old/rpmsack.py	2008-08-28 22:44:20.000000000 -0700
++++ yum/rpmsack.py	2008-08-28 22:46:22.000000000 -0700
+@@ -176,7 +176,7 @@
+         ts = self.readOnlyTS()
+         result = {}
+         
+-        mi = ts.dbMatch('basenames', name)
++        mi = ts.dbMatch('basenames', name.encode('us-ascii'))
+         for hdr in mi:
+             pkg = self._makePackageObject(hdr, mi.instance())
+             if not result.has_key(pkg.pkgid):
+@@ -195,7 +195,7 @@
+         ts = self.readOnlyTS()
+         result = {}
+         tag = self.DEP_TABLE[prcotype][0]
+-        mi = ts.dbMatch(tag, name)
++        mi = ts.dbMatch(tag, name.encode('us-ascii'))
+         for hdr in mi:
+             po = self._makePackageObject(hdr, mi.instance())
+             result[po.pkgid] = po

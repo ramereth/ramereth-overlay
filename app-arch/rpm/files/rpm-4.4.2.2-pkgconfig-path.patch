@@ -1,0 +1,14 @@
+Set PKG_CONFIG_PATH correctly wrt target arch.
+Optimally belongs in redhat-rpm-config but easier to just add here...
+
+--- rpm-4.4.2/macros.in.pkgconfigpath	2007-01-30 15:57:37.000000000 -0500
++++ rpm-4.4.2/macros.in	2007-01-30 16:04:25.000000000 -0500
+@@ -926,6 +926,8 @@
+   export RPM_BUILD_ROOT}\
+   %{?_javaclasspath:CLASSPATH=\"%{_javaclasspath}\"\
+   export CLASSPATH}\
++  PKG_CONFIG_PATH=\"%{_libdir}/pkgconfig:%{_datadir}/pkgconfig\"\
++  export PKG_CONFIG_PATH\
+   \
+   %{verbose:set -x}%{!verbose:exec > /dev/null}\
+   umask 022\

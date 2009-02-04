@@ -1,0 +1,12 @@
+diff -up rpm-4.4.2.3-rc1/macros.in.qfmt rpm-4.4.2.3-rc1/macros.in
+--- rpm-4.4.2.3-rc1/macros.in.qfmt	2008-01-25 16:52:39.000000000 +0200
++++ rpm-4.4.2.3-rc1/macros.in	2008-01-25 16:57:31.000000000 +0200
+@@ -791,7 +791,7 @@ print (t)\
+ # Default headerSprintf() output format string for rpm -qa
+ #
+ # XXX	Note: escaped %% for use in headerSprintf()
+-%_query_all_fmt		%%{name}-%%{version}-%%{release}
++%_query_all_fmt		%%{name}-%%{version}-%%{release}%%|arch?{.%%{arch}}:{}|
+ 
+ #
+ # Default path to the file used for transaction fcmtl lock.

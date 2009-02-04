@@ -1,0 +1,253 @@
+diff -up rpm-4.4.2.2-rc2/python/Makefile.am.matchpathcon rpm-4.4.2.2-rc2/python/Makefile.am
+--- rpm-4.4.2.2-rc2/python/Makefile.am.matchpathcon	2007-09-11 09:28:15.000000000 +0300
++++ rpm-4.4.2.2-rc2/python/Makefile.am	2007-09-27 11:05:29.000000000 +0300
+@@ -34,7 +34,8 @@ mylibs= \
+ 	$(top_builddir)/rpmdb/librpmdb.la \
+ 	$(top_builddir)/rpmio/librpmio.la \
+ 	@WITH_POPT_LIB@ \
+-	@WITH_LIBELF_LIB@
++	@WITH_LIBELF_LIB@ \
++	@WITH_SELINUX_LIB@
+ 
+ LDADD =
+ 
+diff -up rpm-4.4.2.2-rc2/python/rpmts-py.c.matchpathcon rpm-4.4.2.2-rc2/python/rpmts-py.c
+--- rpm-4.4.2.2-rc2/python/rpmts-py.c.matchpathcon	2007-09-11 09:28:15.000000000 +0300
++++ rpm-4.4.2.2-rc2/python/rpmts-py.c	2007-09-27 11:25:29.000000000 +0300
+@@ -1187,17 +1187,13 @@ rpmts_Run(rpmtsObject * s, PyObject * ar
+     }
+ 
+     /* Initialize security context patterns (if not already done). */
+-    if (!(s->ts->transFlags & RPMTRANS_FLAG_NOCONTEXTS)) {
+-	rpmsx sx = rpmtsREContext(s->ts);
+-	if (sx == NULL) {
+-	    const char *fn = rpmGetPath("%{?_install_file_context_path}", NULL);
+-	    if (fn != NULL && *fn != '\0') {
+-		sx = rpmsxNew(fn);
+-		(void) rpmtsSetREContext(s->ts, sx);
+-	    }
+-	    fn = _free(fn);
++    if (rpmtsSELinuxEnabled(s->ts) &&
++	!(s->ts->transFlags & RPMTRANS_FLAG_NOCONTEXTS)) {
++	const char *fn = rpmGetPath("%{?_install_file_context_path}", NULL);
++	if (fn != NULL && *fn != '\0') {
++                matchpathcon_init(fn);
+ 	}
+-	sx = rpmsxFree(sx);
++	fn = _free(fn);
+     } 
+ 
+ if (_rpmts_debug)
+diff -up rpm-4.4.2.2-rc2/build/Makefile.am.matchpathcon rpm-4.4.2.2-rc2/build/Makefile.am
+--- rpm-4.4.2.2-rc2/build/Makefile.am.matchpathcon	2007-09-11 09:28:12.000000000 +0300
++++ rpm-4.4.2.2-rc2/build/Makefile.am	2007-09-27 11:05:29.000000000 +0300
+@@ -35,6 +35,7 @@ librpmbuild_la_LDFLAGS = -release 4.4 $(
+ 	$(top_builddir)/lib/librpm.la \
+ 	$(top_builddir)/rpmdb/librpmdb.la \
+ 	$(top_builddir)/rpmio/librpmio.la \
++	@WITH_SELINUX_LIB@ \
+ 	@WITH_LIBELF_LIB@
+ 
+ rpmfile.h:
+diff -up rpm-4.4.2.2-rc2/build/files.c.matchpathcon rpm-4.4.2.2-rc2/build/files.c
+--- rpm-4.4.2.2-rc2/build/files.c.matchpathcon	2007-09-11 09:28:12.000000000 +0300
++++ rpm-4.4.2.2-rc2/build/files.c	2007-09-27 11:05:29.000000000 +0300
+@@ -23,7 +23,7 @@
+ #define	_RPMFI_INTERNAL
+ #include "rpmfi.h"
+ 
+-#include "rpmsx.h"
++#include <selinux/selinux.h>
+ 
+ #define	_RPMTE_INTERNAL
+ #include "rpmte.h"
+@@ -1136,7 +1136,7 @@ static void genCpioListAndHeader(/*@part
+     int apathlen = 0;
+     int dpathlen = 0;
+     int skipLen = 0;
+-    rpmsx sx = NULL;
++    security_context_t scon = NULL;
+     const char * sxfn;
+     size_t fnlen;
+     FileListRec flp;
+@@ -1156,7 +1156,7 @@ static void genCpioListAndHeader(/*@part
+ 
+     sxfn = rpmGetPath("%{?_build_file_context_path}", NULL);
+     if (sxfn != NULL && *sxfn != '\0')
+-   	sx = rpmsxNew(sxfn);
++   	matchpathcon_init(sxfn);
+ 
+     for (i = 0, flp = fl->fileList; i < fl->fileListRecsUsed; i++, flp++) {
+ 	const char *s;
+@@ -1338,18 +1338,19 @@ static void genCpioListAndHeader(/*@part
+ 			       &(flp->flags), 1);
+ 
+ 	/* Add file security context to package. */
+-/*@-branchstate@*/
+-	if (sx != NULL) {
+-	    mode_t fmode = (uint_16)flp->fl_mode;
+-	    s = rpmsxFContext(sx, flp->fileURL, fmode);
+-	    if (s == NULL) s = "";
+-	    (void) headerAddOrAppendEntry(h, RPMTAG_FILECONTEXTS, RPM_STRING_ARRAY_TYPE,
+-			       &s, 1);
+-	}
+-/*@=branchstate@*/
++	mode_t fmode = (uint_16)flp->fl_mode;
++	int rc = matchpathcon(flp->fileURL, fmode, &scon);
++        if ( rc == 0 && scon != NULL) {
++	    (void) headerAddOrAppendEntry(h, RPMTAG_FILECONTEXTS, RPM_STRING_ARRAY_TYPE, &scon, 1);
++	    freecon(scon);
++        }
++        else  {
++            const char *nocon = "";
++	    (void) headerAddOrAppendEntry(h, RPMTAG_FILECONTEXTS, RPM_STRING_ARRAY_TYPE, &nocon, 1);
++        }
++
+ 
+     }
+-    sx = rpmsxFree(sx);
+     sxfn = _free(sxfn);
+ 
+     (void) headerAddEntry(h, RPMTAG_SIZE, RPM_INT32_TYPE,
+diff -up rpm-4.4.2.2-rc2/lib/fsm.c.matchpathcon rpm-4.4.2.2-rc2/lib/fsm.c
+--- rpm-4.4.2.2-rc2/lib/fsm.c.matchpathcon	2007-09-11 09:28:15.000000000 +0300
++++ rpm-4.4.2.2-rc2/lib/fsm.c	2007-09-27 11:28:30.000000000 +0300
+@@ -634,12 +634,11 @@ static int fsmMapFContext(FSM_t fsm)
+     if (ts != NULL && rpmtsSELinuxEnabled(ts) == 1 &&
+ 	!(rpmtsFlags(ts) & RPMTRANS_FLAG_NOCONTEXTS))
+     {
+-	rpmsx sx = rpmtsREContext(ts);
++	security_context_t scon = NULL;
+ 
+-	if (sx != NULL) {
++	if ( matchpathcon(fsm->path, st->st_mode, &scon) == 0 && scon != NULL) {
+ 	    /* Get file security context from patterns. */
+-	    fsm->fcontext = rpmsxFContext(sx, fsm->path, st->st_mode);
+-	    sx = rpmsxFree(sx);
++	    fsm->fcontext = scon;
+ 	} else {
+ 	    int i = fsm->ix;
+ 
+@@ -1277,7 +1276,7 @@ static int fsmMkdirs(/*@special@*/ /*@pa
+ /*@-compdef@*/
+     rpmts ts = fsmGetTs(fsm);
+ /*@=compdef@*/
+-    rpmsx sx = rpmtsREContext(ts);
++    security_context_t scon = NULL;
+ 
+     fsm->path = NULL;
+ 
+@@ -1341,10 +1340,15 @@ static int fsmMkdirs(/*@special@*/ /*@pa
+ 		if (!rc) {
+ 		    /* XXX FIXME? only new dir will have context set. */
+ 		    /* Get file security context from patterns. */
+-		    if (sx != NULL) {
+-			fsm->fcontext = rpmsxFContext(sx, fsm->path, st->st_mode);
+-			rc = fsmNext(fsm, FSM_LSETFCON);
++		    if (rpmtsSELinuxEnabled(ts) &&
++			! rpmtsFlags(ts) & RPMTRANS_FLAG_NOCONTEXTS) {
++			if (matchpathcon(fsm->path, st->st_mode, &scon) == 0 &&
++			    scon != NULL) {
++				fsm->fcontext = scon;
++				rc = fsmNext(fsm, FSM_LSETFCON);
++			}
+ 		    }
++			
+ 		    if (fsm->fcontext == NULL)
+ 			rpmMessage(RPMMESS_DEBUG,
+ 			    _("%s directory created with perms %04o, no context.\n"),
+@@ -1377,7 +1381,6 @@ static int fsmMkdirs(/*@special@*/ /*@pa
+     }
+ /*@=boundswrite@*/
+     dnli = dnlFreeIterator(dnli);
+-    sx = rpmsxFree(sx);
+     /*@=observertrans =dependenttrans@*/
+ 
+     fsm->path = path;
+diff -up rpm-4.4.2.2-rc2/lib/rpmfi.c.matchpathcon rpm-4.4.2.2-rc2/lib/rpmfi.c
+--- rpm-4.4.2.2-rc2/lib/rpmfi.c.matchpathcon	2007-09-11 09:28:15.000000000 +0300
++++ rpm-4.4.2.2-rc2/lib/rpmfi.c	2007-09-27 11:05:29.000000000 +0300
+@@ -16,7 +16,7 @@
+ #define	_RPMFI_INTERNAL
+ #include "rpmfi.h"
+ 
+-#include "rpmsx.h"
++#include <selinux/selinux.h>
+ 
+ #define	_RPMTE_INTERNAL	/* relocations */
+ #include "rpmte.h"
+@@ -1697,8 +1697,8 @@ void rpmfiBuildREContexts(Header h,
+ {
+     int scareMem = 0;
+     rpmfi fi = rpmfiNew(NULL, h, RPMTAG_BASENAMES, scareMem);
+-    rpmsx sx = NULL;
+     const char ** av = NULL;
++    const char * myfn = rpmGetPath("%{?__file_context_path}", NULL);
+     int ac;
+     size_t nb;
+     char * t;
+@@ -1712,7 +1712,7 @@ void rpmfiBuildREContexts(Header h,
+     }
+ 
+     /* Read security context patterns. */
+-    sx = rpmsxNew(NULL);
++    matchpathcon_init(myfn);
+ 
+     /* Compute size of argv array blob, concatenating file contexts. */
+     nb = ac * sizeof(*fcnb);
+@@ -1723,10 +1723,9 @@ void rpmfiBuildREContexts(Header h,
+     while (rpmfiNext(fi) >= 0) {
+ 	const char * fn = rpmfiFN(fi);
+ 	mode_t fmode = rpmfiFMode(fi);
+-	const char * scon;
++	security_context_t scon;
+ 
+-	scon = rpmsxFContext(sx, fn, fmode);
+-	if (scon != NULL) {
++	if (matchpathcon(fn, fmode, &scon) == 0) {
+ 	    fcnb[ac] = strlen(scon) + 1;
+ /*@-branchstate@*/
+ 	    if (fcnb[ac] > 0) {
+@@ -1734,6 +1733,7 @@ void rpmfiBuildREContexts(Header h,
+ 		memcpy(fctxt+fctxtlen, scon, fcnb[ac]);
+ 		fctxtlen += fcnb[ac];
+ 	    }
++            freecon(scon); 
+ /*@=branchstate@*/
+ 	}
+ 	ac++;
+@@ -1759,7 +1759,6 @@ void rpmfiBuildREContexts(Header h,
+ 
+ exit:
+     fi = rpmfiFree(fi);
+-    sx = rpmsxFree(sx);
+     /*@-branchstate@*/
+     if (fcontextp)
+ 	*fcontextp = av;
+diff -up rpm-4.4.2.2-rc2/lib/rpminstall.c.matchpathcon rpm-4.4.2.2-rc2/lib/rpminstall.c
+--- rpm-4.4.2.2-rc2/lib/rpminstall.c.matchpathcon	2007-09-11 09:28:15.000000000 +0300
++++ rpm-4.4.2.2-rc2/lib/rpminstall.c	2007-09-27 11:27:46.000000000 +0300
+@@ -309,17 +309,12 @@ int rpmInstall(rpmts ts,
+ 	ia->transFlags |= RPMTRANS_FLAG_REPACKAGE;
+ 
+     /* Initialize security context patterns (if not already done). */
+-    if (!(ia->transFlags & RPMTRANS_FLAG_NOCONTEXTS)) {
+-	rpmsx sx = rpmtsREContext(ts);
+-	if (sx == NULL) {
+-	    const char *fn = rpmGetPath("%{?_install_file_context_path}", NULL);
+-	    if (fn != NULL && *fn != '\0') {
+-		sx = rpmsxNew(fn);
+-		(void) rpmtsSetREContext(ts, sx);
+-	    }
+-	    fn = _free(fn);
+-	}
+-	sx = rpmsxFree(sx);
++    if (rpmtsSELinuxEnabled(ts) &&
++	!(ia->transFlags & RPMTRANS_FLAG_NOCONTEXTS)) {
++            const char *fn = rpmGetPath("%{?_install_file_context_path}", NULL);
++            if (fn != NULL && *fn != '\0') {
++                    matchpathcon_init(fn);
++            }
+     }
+     (void) rpmtsSetFlags(ts, ia->transFlags);
+ 

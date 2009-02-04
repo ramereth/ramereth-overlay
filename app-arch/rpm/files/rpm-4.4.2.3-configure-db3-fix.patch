@@ -1,0 +1,11 @@
+--- configure.ac.old	2008-08-31 03:00:54.000000000 -0700
++++ configure.ac	2008-08-31 03:01:00.000000000 -0700
+@@ -1305,7 +1305,7 @@
+ dnl # XXX Propagate -lucb to popt ...
+ dnl export LIBS INCPATH CONFIG_SITE
+ 
+-AC_CONFIG_SUBDIRS(file db3)
++AC_CONFIG_SUBDIRS(file)
+ 
+ AC_CONFIG_FILES([ Doxyfile Makefile rpmrc macros platform rpmpopt
+ 	rpmio/Makefile rpmdb/Makefile lib/Makefile build/Makefile

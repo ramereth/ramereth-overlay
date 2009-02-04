@@ -1,0 +1,21 @@
+--- rpm-4.4.2.1/configure.ac.no-popt	2007-08-23 10:24:17.000000000 +0300
++++ rpm-4.4.2.1/configure.ac	2007-08-23 10:26:41.000000000 +0300
+@@ -1302,7 +1302,7 @@
+ dnl # XXX Propagate -lucb to popt ...
+ dnl export LIBS INCPATH CONFIG_SITE
+ 
+-AC_CONFIG_SUBDIRS(popt file db3)
++AC_CONFIG_SUBDIRS(file db3)
+ 
+ AC_CONFIG_FILES([ Doxyfile Makefile rpmrc macros platform rpmpopt
+ 	rpmio/Makefile rpmdb/Makefile lib/Makefile build/Makefile
+@@ -1322,8 +1322,6 @@
+ 	python/rpm/Makefile
+  	lua/Makefile
+   ])
+-AC_CONFIG_COMMANDS([default],[[	echo timestamp > popt/stamp-h.in
+-	echo timestamp > stamp-h.in
+-  
++AC_CONFIG_COMMANDS([default],[[	echo timestamp > stamp-h.in
+ ]],[[]])
+ AC_OUTPUT

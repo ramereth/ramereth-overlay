@@ -1,0 +1,69 @@
+--- rpm-4.4.2/lib/poptQV.c.trust	2004-11-09 19:50:42.000000000 -0500
++++ rpm-4.4.2/lib/poptQV.c	2006-04-27 13:42:31.000000000 -0400
+@@ -31,6 +31,10 @@
+ #define POPT_HDLIST		-1011
+ #define POPT_FTSWALK		-1012
+ 
++/* -1025 thrugh -1032 are common in rpmcli.h. */
++#define POPT_TARGETPLATFORM     -1036
++#define POPT_TRUST              -1037
++
+ /* ========== Query/Verify/Signature source args */
+ static void rpmQVSourceArgCallback( /*@unused@*/ poptContext con,
+ 		/*@unused@*/ enum poptCallbackReason reason,
+@@ -240,6 +244,14 @@
+ 	qva->qva_flags |= VERIFY_SCRIPT;
+ 	break;
+ 
++    /* XXX perhaps POPT_ARG_INT instead of callback. */
++    case POPT_TRUST:
++    {	char * end = NULL;
++	long trust = (int) strtol(arg, &end, 0);
++	/* XXX range checks on trust. */
++	/* XXX if (end && *end) argerror(_("non-numeric trust metric.")); */
++	qva->trust = trust;
++    }	break;
+     }
+ }
+ 
+@@ -376,14 +388,6 @@
+         N_("don't verify package signature(s)"), NULL },
+ #endif
+ 
+-/** @todo Add --nogpg/--nopgp aliases to rpmpopt, eliminate. */
+- { "nogpg", '\0', POPT_BIT_SET|POPT_ARGFLAG_DOC_HIDDEN,
+-	&rpmQVKArgs.qva_flags, VERIFY_SIGNATURE,
+-        N_("don't verify GPG V3 DSA signature(s)"), NULL },
+- { "nopgp", '\0', POPT_BIT_SET|POPT_ARGFLAG_DOC_HIDDEN,
+-	&rpmQVKArgs.qva_flags, VERIFY_SIGNATURE,
+-        N_("don't verify PGP V3 RSA/MD5 signature(s)"), NULL },
+-
+     POPT_TABLEEND
+ };
+ 
+@@ -408,6 +412,15 @@
+ 	N_("sign package(s) (identical to --addsign)"), NULL },
+  { "sign", '\0', POPT_ARGFLAG_DOC_HIDDEN, &rpmQVKArgs.sign, 0,
+ 	N_("generate signature"), NULL },
++ /* XXX perhaps POPT_ARG_INT instead of callback. */
++ { "trust", '\0', POPT_ARG_STRING|POPT_ARGFLAG_DOC_HIDDEN, 0,  POPT_TRUST,
++        N_("specify trust metric"), "TRUST" },
++ { "trusted", '\0', POPT_ARG_VAL|POPT_ARGFLAG_DOC_HIDDEN,
++	&rpmQVKArgs.trust, 1,
++        N_("set ultimate trust when importing pubkey(s)"), NULL },
++ { "untrusted", '\0', POPT_ARG_VAL|POPT_ARGFLAG_DOC_HIDDEN,
++	&rpmQVKArgs.trust, -1,
++        N_("unset ultimate trust when importing pubkey(s)"), NULL },
+ 
+  { "nodigest", '\0', POPT_BIT_SET, &rpmQVKArgs.qva_flags, VERIFY_DIGEST,
+         N_("don't verify package digest(s)"), NULL },
+--- rpm-4.4.2/lib/rpmcli.h.trust	2005-01-04 11:35:05.000000000 -0500
++++ rpm-4.4.2/lib/rpmcli.h	2006-04-27 13:37:40.000000000 -0400
+@@ -280,6 +280,7 @@
+ /*@only@*/ /*@null@*/
+     const char * qva_queryFormat;/*!< Format for headerSprintf(). */
+     int sign;			/*!< Is a passphrase needed? */
++    int trust;			/*!< Trust metric when importing pubkeys. */
+ /*@observer@*/
+     const char * passPhrase;	/*!< Pass phrase. */
+ /*@observer@*/ /*@null@*/

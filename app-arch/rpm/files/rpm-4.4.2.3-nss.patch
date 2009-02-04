@@ -1,0 +1,1953 @@
+commit c8173f26908886f7b02f7f88a7a2aed9498839da
+Author: Panu Matilainen <pmatilai@redhat.com>
+Date:   Tue Apr 1 10:42:49 2008 +0300
+
+    NSS support
+
+diff --git a/Makefile.am b/Makefile.am
+index 0495836..4c68c4c 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -10,14 +10,14 @@ EXTRA_DIST = CHANGES ChangeLog CREDITS Doxyheader GROUPS README.amiga INSTALL \
+ 	po/*.in po/*.po po/rpm.pot \
+ 	rpm.magic rpmpopt-$(VERSION) rpmqv.c 
+ 
+-SUBDIRS = po misc @WITH_ZLIB_SUBDIR@ @WITH_ELFUTILS_SUBDIR@ @WITH_MAGIC_SUBDIR@ @WITH_DB_SUBDIR@ @WITH_SQLITE3_SUBDIR@ @WITH_POPT_SUBDIR@ @WITH_BEECRYPT_SUBDIR@ @WITH_NEON_SUBDIR@ lua rpmio rpmdb lib build @WITH_PYTHON_SUBDIR@ tools scripts doc .
++SUBDIRS = po misc @WITH_ZLIB_SUBDIR@ @WITH_ELFUTILS_SUBDIR@ @WITH_MAGIC_SUBDIR@ @WITH_DB_SUBDIR@ @WITH_SQLITE3_SUBDIR@ @WITH_POPT_SUBDIR@ @WITH_NEON_SUBDIR@ lua rpmio rpmdb lib build @WITH_PYTHON_SUBDIR@ tools scripts doc .
+ 
+ INCLUDES = \
+ 	-I$(top_srcdir)/build \
+ 	-I$(top_srcdir)/lib \
+ 	-I$(top_srcdir)/rpmdb \
+ 	-I$(top_srcdir)/rpmio \
+-	@WITH_BEECRYPT_INCLUDE@ \
++	@WITH_NSS_INCLUDE@ \
+ 	@WITH_POPT_INCLUDE@ \
+ 	-I$(top_srcdir)/misc \
+ 	@WITH_LIBELF_INCLUDE@ \
+@@ -25,7 +25,7 @@ INCLUDES = \
+ 
+ staticLDFLAGS = @LDFLAGS_STATIC@ @LDFLAGS_NPTL@
+ 
+-myLDFLAGS = @WITH_LIBELF_LIB@ @WITH_BEECRYPT_LIB@
++myLDFLAGS = @WITH_LIBELF_LIB@
+ 
+ myLDADD = \
+ 	$(top_builddir)/lib/librpm.la \
+@@ -33,6 +33,7 @@ myLDADD = \
+ 	$(top_builddir)/rpmio/librpmio.la \
+ 	@WITH_POPT_LIB@ \
+ 	@WITH_ZLIB_LIB@ \
++	@WITH_NSS_LIB@ \
+ 	@LIBMISC@
+ 
+ rpmbindir = `echo $(bindir) | sed -e s,usr/bin,bin,`
+@@ -71,7 +72,7 @@ rpmd.o:	$(top_srcdir)/rpmqv.c
+ 
+ rpmi_SOURCES =
+ #rpmi_LDFLAGS =		$(myLDFLAGS) $(staticLDFLAGS)
+-#rpmi_LDADD =		rpmi.o $(myLDADD) @WITH_LIBELF_LIB@ @WITH_BEECRYPT_LIB@
++#rpmi_LDADD =		rpmi.o $(myLDADD) @WITH_LIBELF_LIB@
+ rpmi_LDFLAGS =		$(myLDFLAGS)
+ rpmi_LDADD =		rpmi.o $(myLDADD)
+ rpmi.o:	$(top_srcdir)/rpmqv.c
+@@ -112,7 +113,6 @@ lint:
+ 		`make -s sources -C lib` \
+ 		`make -s sources -C rpmdb` \
+ 		`make -s sources -C rpmio` \
+-		`make -s sources -C beecrypt` \
+ 		`make -s sources -C file/src` \
+ 		`make -s sources -C popt`
+ 
+diff --git a/autogen.sh b/autogen.sh
+index 27d4118..63bfbe1 100755
+--- a/autogen.sh
++++ b/autogen.sh
+@@ -48,9 +48,6 @@ fi
+ if [ -d zlib ]; then
+     (echo "--- zlib"; cd zlib; ./autogen.sh --noconfigure "$@")
+ fi
+-if [ -d beecrypt ]; then
+-    (echo "--- beecrypt"; cd beecrypt; ./autogen.sh --noconfigure "$@")
+-fi
+ if [ -d elfutils ]; then
+     (echo "--- elfutils"; cd elfutils; ./autogen.sh --noconfigure "$@")
+ fi
+diff --git a/build/Makefile.am b/build/Makefile.am
+index 83d2dee..75b41c2 100644
+--- a/build/Makefile.am
++++ b/build/Makefile.am
+@@ -9,7 +9,7 @@ INCLUDES = -I. \
+ 	-I$(top_srcdir)/lib \
+ 	-I$(top_srcdir)/rpmdb \
+ 	-I$(top_srcdir)/rpmio \
+-	@WITH_BEECRYPT_INCLUDE@ \
++	@WITH_NSS_INCLUDE@ \
+ 	@WITH_MAGIC_INCLUDE@ \
+ 	@WITH_POPT_INCLUDE@ \
+ 	@WITH_LIBELF_INCLUDE@ \
+diff --git a/configure.ac b/configure.ac
+index b004391..c98c86d 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -463,34 +463,32 @@ AC_SUBST(WITH_LIBDWARF_INCLUDE)
+ AC_SUBST(WITH_LIBDWARF_DEBUGEDIT)
+ 
+ #=================
+-# Check for beecrypt library. Prefer external, otherwise internal.
+-WITH_BEECRYPT_SUBDIR=
+-WITH_BEECRYPT_INCLUDE=
+-WITH_BEECRYPT_LIB=
+-AC_CHECK_HEADER([beecrypt/beecrypt.h], [
+-  AC_CHECK_LIB(beecrypt, mpfprintln, [
+-    AC_DEFINE(HAVE_LIBBEECRYPT, 1, [Define to 1 if you have the 'beecrypt' library (-lbeecrypt).])
+-    AC_CHECK_HEADER([beecrypt/api.h], [
+-      AC_DEFINE(HAVE_BEECRYPT_API_H, 1, [Define to 1 if you have the <beecrypt/api.h> header file.])
+-    ])
+-    WITH_BEECRYPT_INCLUDE="-I${includedir}/beecrypt"
+-    WITH_BEECRYPT_LIB="-lbeecrypt"
++# Check for NSS library.
++WITH_NSS_INCLUDE=
++WITH_NSS_LIB=
++check=`pkg-config --version 2>/dev/null`
++if test -n "$check"; then
++  addlib=$(pkg-config --libs nss | sed 's/-lsmime3//;s/-lssl3//')
++  addcppflags=$(pkg-config --cflags nss)
++else
++# Without pkg-config, we'll kludge in some defaults
++  addlib="-lnss3 -lplds4 -lplc4 -lnspr4 -lpthread -ldl"
++  addcppflags="-I/usr/include/nss3 -I/usr/include/nspr4"
++fi
++save_CPPFLAGS="$CPPFLAGS"
++CPPFLAGS="$save_CPPFLAGS $addcppflags"
++AC_CHECK_HEADER([nss3/nss.h], [
++  AC_CHECK_LIB(nss3, NSS_NoDB_Init, [
++    AC_DEFINE(HAVE_LIBNSS, 1, [Define to 1 if you have the 'NSS' library (-lnss3).])
++    WITH_NSS_INCLUDE="$addcppflags"
++    WITH_NSS_LIB="$addlib"
+   ])
+ ],[
+-  if test -d beecrypt ; then
+-    AC_DEFINE(HAVE_LIBBEECRYPT, 1, [Define to 1 if you have the 'beecrypt' library (-lbeecrypt).])
+-    WITH_BEECRYPT_SUBDIR=beecrypt
+-    WITH_BEECRYPT_INCLUDE="-I\${top_srcdir}/${WITH_BEECRYPT_SUBDIR}"
+-    WITH_BEECRYPT_LIB="\${top_builddir}/${WITH_BEECRYPT_SUBDIR}/libbeecrypt.la"
+-  fi
+-
+-   if test -z "${WITH_BEECRYPT_LIB}" ; then
+-       AC_MSG_ERROR([rpm requires beecrypt]) 
+-   fi
++  AC_MSG_ERROR([rpm requires NSS]) 
+ ])
+-AC_SUBST(WITH_BEECRYPT_SUBDIR)
+-AC_SUBST(WITH_BEECRYPT_INCLUDE)
+-AC_SUBST(WITH_BEECRYPT_LIB)
++CPPFLAGS="$save_CPPFLAGS"
++AC_SUBST(WITH_NSS_INCLUDE)
++AC_SUBST(WITH_NSS_LIB)
+ 
+ #=================
+ # Check for neon library. Prefer external, otherwise internal.
+diff --git a/lib/Makefile.am b/lib/Makefile.am
+index d433b75..fe761da 100644
+--- a/lib/Makefile.am
++++ b/lib/Makefile.am
+@@ -9,7 +9,7 @@ INCLUDES = -I. \
+ 	-I$(top_srcdir)/build \
+ 	-I$(top_srcdir)/rpmdb \
+ 	-I$(top_srcdir)/rpmio \
+-	@WITH_BEECRYPT_INCLUDE@ \
++	@WITH_NSS_INCLUDE@ \
+ 	@WITH_POPT_INCLUDE@ \
+ 	-I$(top_srcdir)/misc \
+ 	@INCPATH@
+diff --git a/lib/formats.c b/lib/formats.c
+index 59f953a..e4354ff 100644
+--- a/lib/formats.c
++++ b/lib/formats.c
+@@ -210,23 +210,17 @@ static /*@only@*/ char * base64Format(int_32 type, const void * data,
+ 	int lc;
+ 	/* XXX HACK ALERT: element field abused as no. bytes of binary data. */
+ 	size_t ns = element;
+-	size_t nt = ((ns + 2) / 3) * 4;
++	size_t nt = 0;
+ 
+ /*@-boundswrite@*/
+-	/*@-globs@*/
+-	/* Add additional bytes necessary for eol string(s). */
+-	if (b64encode_chars_per_line > 0 && b64encode_eolstr != NULL) {
+-	    lc = (nt + b64encode_chars_per_line - 1) / b64encode_chars_per_line;
+-        if (((nt + b64encode_chars_per_line - 1) % b64encode_chars_per_line) != 0)
+-            ++lc;
+-	    nt += lc * strlen(b64encode_eolstr);
++	if ((enc = b64encode(data, ns, -1)) != NULL) {
++		nt = strlen(enc);
+ 	}
+-	/*@=globs@*/
+ 
+ 	val = t = xmalloc(nt + padding + 1);
+ 
+ 	*t = '\0';
+-	if ((enc = b64encode(data, ns)) != NULL) {
++	if (enc != NULL) {
+ 	    t = stpcpy(t, enc);
+ 	    enc = _free(enc);
+ 	}
+@@ -310,16 +304,13 @@ static /*@only@*/ char * xmlFormat(int_32 type, const void * data,
+ 	xtag = "string";
+ 	break;
+     case RPM_BIN_TYPE:
+-    {	int cpl = b64encode_chars_per_line;
+-/*@-mods@*/
+-	b64encode_chars_per_line = 0;
+-/*@=mods@*/
+-/*@-formatconst@*/
+-	s = base64Format(type, data, formatPrefix, padding, element);
+-/*@=formatconst@*/
+-/*@-mods@*/
+-	b64encode_chars_per_line = cpl;
+-/*@=mods@*/
++    {	
++	/* XXX HACK ALERT: element field abused as no. bytes of binary data. */
++	size_t ns = element;
++    	if ((s = b64encode(data, ns, 0)) == NULL) {
++    		/* XXX proper error handling would be better. */
++    		s = xcalloc(1, padding + (ns / 3) * 4 + 1);
++    	}
+ 	xtag = "base64";
+     }	break;
+     case RPM_CHAR_TYPE:
+diff --git a/lib/package.c b/lib/package.c
+index 09571b0..8458b02 100644
+--- a/lib/package.c
++++ b/lib/package.c
+@@ -1008,11 +1008,9 @@ rpmRC rpmReadPackageFile(rpmts ts, FD_t fd, const char * fn, Header * hdrp)
+ 		fddig->hashctx = NULL;
+ 		/*@switchbreak@*/ break;
+ 	    case PGPHASHALGO_SHA1:
+-#if HAVE_BEECRYPT_API_H
+ 	    case PGPHASHALGO_SHA256:
+ 	    case PGPHASHALGO_SHA384:
+ 	    case PGPHASHALGO_SHA512:
+-#endif
+ 		dig->sha1ctx = fddig->hashctx;
+ 		fddig->hashctx = NULL;
+ 		/*@switchbreak@*/ break;
+diff --git a/lib/rpmchecksig.c b/lib/rpmchecksig.c
+index b4d377e..83b2d2e 100644
+--- a/lib/rpmchecksig.c
++++ b/lib/rpmchecksig.c
+@@ -447,7 +447,7 @@ rpmRC rpmcliImportPubkey(const rpmts ts, const unsigned char * pkt, ssize_t pktl
+     if (rpmtsOpenDB(ts, (O_RDWR|O_CREAT)))
+ 	return RPMRC_FAIL;
+ 
+-    if ((enc = b64encode(pkt, pktlen)) == NULL)
++    if ((enc = b64encode(pkt, pktlen, -1)) == NULL)
+ 	goto exit;
+ 
+     dig = pgpNewDig();
+@@ -698,11 +698,9 @@ assert(dig->md5ctx == NULL);
+ 	    fddig->hashctx = NULL;
+ 	    /*@switchbreak@*/ break;
+ 	case PGPHASHALGO_SHA1:
+-#if HAVE_BEECRYPT_API_H
+ 	case PGPHASHALGO_SHA256:
+ 	case PGPHASHALGO_SHA384:
+ 	case PGPHASHALGO_SHA512:
+-#endif
+ assert(dig->sha1ctx == NULL);
+ 	    dig->sha1ctx = fddig->hashctx;
+ 	    fddig->hashctx = NULL;
+diff --git a/lib/rpmrc.c b/lib/rpmrc.c
+index d402a1e..07e604a 100644
+--- a/lib/rpmrc.c
++++ b/lib/rpmrc.c
+@@ -1884,6 +1884,10 @@ int rpmReadConfigFiles(const char * file, const char * target)
+     /* Reset umask to its default umask(2) value. */
+     mode = umask(mode);
+ 
++    /* Initialize crypto engine as early as possible */
++    if (rpmInitCrypto() < 0) {
++	return -1;
++    }	
+     /* Preset target macros */
+     /*@-nullstate@*/	/* FIX: target can be NULL */
+     rpmRebuildTargetVars(&target, NULL);
+diff --git a/lib/rpmts.c b/lib/rpmts.c
+index ef791c6..8423957 100644
+--- a/lib/rpmts.c
++++ b/lib/rpmts.c
+@@ -4,7 +4,7 @@
+  */
+ #include "system.h"
+ 
+-#include "rpmio_internal.h"	/* XXX for pgp and beecrypt */
++#include "rpmio_internal.h"	/* XXX for pgp */
+ #include <rpmlib.h>
+ #include <rpmmacro.h>		/* XXX rpmtsOpenDB() needs rpmGetPath */
+ 
+diff --git a/lib/signature.c b/lib/signature.c
+index 5617e32..0db1349 100644
+--- a/lib/signature.c
++++ b/lib/signature.c
+@@ -1215,9 +1215,10 @@ verifyRSASignature(rpmts ts, /*@out@*/ char * t,
+     int_32 sigtag = rpmtsSigtag(ts);
+     pgpDig dig = rpmtsDig(ts);
+     pgpDigParams sigp = rpmtsSignature(ts);
+-    const char * prefix = NULL;
++    SECOidTag sigalg;
+     rpmRC res = RPMRC_OK;
+     int xx;
++    SECItem digest;
+ 
+     *t = '\0';
+     if (dig != NULL && dig->hdrmd5ctx == md5ctx)
+@@ -1248,43 +1249,40 @@ verifyRSASignature(rpmts ts, /*@out@*/ char * t,
+     switch (sigp->hash_algo) {
+     case PGPHASHALGO_MD5:
+ 	t = stpcpy(t, " RSA/MD5");
+-	prefix = "3020300c06082a864886f70d020505000410";
++	sigalg = SEC_OID_PKCS1_MD5_WITH_RSA_ENCRYPTION;
+ 	break;
+     case PGPHASHALGO_SHA1:
+ 	t = stpcpy(t, " RSA/SHA1");
+-	prefix = "3021300906052b0e03021a05000414";
++	sigalg = SEC_OID_PKCS1_SHA1_WITH_RSA_ENCRYPTION;
+ 	break;
+     case PGPHASHALGO_RIPEMD160:
+ 	res = RPMRC_NOKEY;
+-	prefix = NULL;
+ 	break;
+     case PGPHASHALGO_MD2:
+ 	t = stpcpy(t, " RSA/MD2");
+-	prefix = "3020300c06082a864886f70d020205000410";
++	sigalg = SEC_OID_PKCS1_MD2_WITH_RSA_ENCRYPTION;
+ 	break;
+     case PGPHASHALGO_TIGER192:
+ 	res = RPMRC_NOKEY;
+-	prefix = NULL;
+ 	break;
+     case PGPHASHALGO_HAVAL_5_160:
+ 	res = RPMRC_NOKEY;
+-	prefix = NULL;
+ 	break;
+     case PGPHASHALGO_SHA256:
+ 	t = stpcpy(t, " RSA/SHA256");
+-	prefix = "3031300d060960864801650304020105000420";
++	sigalg = SEC_OID_PKCS1_SHA256_WITH_RSA_ENCRYPTION;
+ 	break;
+     case PGPHASHALGO_SHA384:
+ 	t = stpcpy(t, " RSA/SHA384");
+-	prefix = "3041300d060960864801650304020205000430";
++	sigalg = SEC_OID_PKCS1_SHA384_WITH_RSA_ENCRYPTION;
+ 	break;
+     case PGPHASHALGO_SHA512:
+ 	t = stpcpy(t, " RSA/SHA512");
+-	prefix = "3051300d060960864801650304020305000440";
++	sigalg = SEC_OID_PKCS1_SHA512_WITH_RSA_ENCRYPTION;
+ 	break;
+     default:
+ 	res = RPMRC_NOKEY;
+-	prefix = NULL;
++	sigalg = SEC_OID_UNKNOWN;
+ 	break;
+     }
+ 
+@@ -1295,8 +1293,6 @@ verifyRSASignature(rpmts ts, /*@out@*/ char * t,
+ 
+     (void) rpmswEnter(rpmtsOp(ts, RPMTS_OP_DIGEST), 0);
+     {	DIGEST_CTX ctx = rpmDigestDup(md5ctx);
+-	byte signhash16[2];
+-	const char * s;
+ 
+ 	if (sigp->hash != NULL)
+ 	    xx = rpmDigestUpdate(ctx, sigp->hash, sigp->hashlen);
+@@ -1313,40 +1309,18 @@ verifyRSASignature(rpmts ts, /*@out@*/ char * t,
+ 	}
+ #endif
+ 
+-	xx = rpmDigestFinal(ctx, (void **)&dig->md5, &dig->md5len, 1);
++	xx = rpmDigestFinal(ctx, (void **)&dig->md5, &dig->md5len, 0);
+ 	(void) rpmswExit(rpmtsOp(ts, RPMTS_OP_DIGEST), sigp->hashlen);
+ 	rpmtsOp(ts, RPMTS_OP_DIGEST)->count--;	/* XXX one too many */
+ 
+ 	/* Compare leading 16 bits of digest for quick check. */
+-	s = dig->md5;
+-	signhash16[0] = (nibble(s[0]) << 4) | nibble(s[1]);
+-	signhash16[1] = (nibble(s[2]) << 4) | nibble(s[3]);
+-	if (memcmp(signhash16, sigp->signhash16, sizeof(signhash16))) {
++	if (memcmp(dig->md5, sigp->signhash16, 2)) {
+ 	    res = RPMRC_FAIL;
+ 	    goto exit;
+ 	}
+-    }
+-
+-    /* Generate RSA modulus parameter. */
+-    {	unsigned int nbits = MP_WORDS_TO_BITS(dig->c.size);
+-	unsigned int nb = (nbits + 7) >> 3;
+-	const char * hexstr;
+-	char * tt;
+-
+-assert(prefix != NULL);
+-	hexstr = tt = xmalloc(2 * nb + 1);
+-	memset(tt, 'f', (2 * nb));
+-	tt[0] = '0'; tt[1] = '0';
+-	tt[2] = '0'; tt[3] = '1';
+-	tt += (2 * nb) - strlen(prefix) - strlen(dig->md5) - 2;
+-	*tt++ = '0'; *tt++ = '0';
+-	tt = stpcpy(tt, prefix);
+-	tt = stpcpy(tt, dig->md5);
+-
+-	mpnzero(&dig->rsahm);	(void) mpnsethex(&dig->rsahm, hexstr);
+-
+-	hexstr = _free(hexstr);
+-
++	digest.type = siBuffer;
++	digest.data = dig->md5;
++	digest.len = dig->md5len;
+     }
+ 
+     /* Retrieve the matching public key. */
+@@ -1355,12 +1329,7 @@ assert(prefix != NULL);
+ 	goto exit;
+ 
+     (void) rpmswEnter(rpmtsOp(ts, RPMTS_OP_SIGNATURE), 0);
+-#if HAVE_BEECRYPT_API_H
+-    xx = rsavrfy(&dig->rsa_pk.n, &dig->rsa_pk.e, &dig->c, &dig->rsahm);
+-#else
+-    xx = rsavrfy(&dig->rsa_pk, &dig->rsahm, &dig->c);
+-#endif
+-    if (xx)
++    if (VFY_VerifyDigest(&digest, dig->rsa, dig->rsasig, sigalg, NULL) == SECSuccess)
+ 	res = RPMRC_OK;
+     else
+ 	res = RPMRC_FAIL;
+@@ -1401,6 +1370,7 @@ verifyDSASignature(rpmts ts, /*@out@*/ char * t,
+     pgpDigParams sigp = rpmtsSignature(ts);
+     rpmRC res;
+     int xx;
++    SECItem digest;
+ 
+     *t = '\0';
+     if (dig != NULL && dig->hdrsha1ctx == sha1ctx)
+@@ -1428,7 +1398,6 @@ verifyDSASignature(rpmts ts, /*@out@*/ char * t,
+ 
+     (void) rpmswEnter(rpmtsOp(ts, RPMTS_OP_DIGEST), 0);
+     {	DIGEST_CTX ctx = rpmDigestDup(sha1ctx);
+-	byte signhash16[2];
+ 
+ 	if (sigp->hash != NULL)
+ 	    xx = rpmDigestUpdate(ctx, sigp->hash, sigp->hashlen);
+@@ -1442,19 +1411,18 @@ verifyDSASignature(rpmts ts, /*@out@*/ char * t,
+ 	    memcpy(trailer+2, &nb, sizeof(nb));
+ 	    xx = rpmDigestUpdate(ctx, trailer, sizeof(trailer));
+ 	}
+-	xx = rpmDigestFinal(ctx, (void **)&dig->sha1, &dig->sha1len, 1);
++	xx = rpmDigestFinal(ctx, (void **)&dig->sha1, &dig->sha1len, 0);
+ 	(void) rpmswExit(rpmtsOp(ts, RPMTS_OP_DIGEST), sigp->hashlen);
+ 	rpmtsOp(ts, RPMTS_OP_DIGEST)->count--;	/* XXX one too many */
+ 
+-	mpnzero(&dig->hm);	(void) mpnsethex(&dig->hm, dig->sha1);
+-
+ 	/* Compare leading 16 bits of digest for quick check. */
+-	signhash16[0] = (*dig->hm.data >> 24) & 0xff;
+-	signhash16[1] = (*dig->hm.data >> 16) & 0xff;
+-	if (memcmp(signhash16, sigp->signhash16, sizeof(signhash16))) {
++	if (memcmp(dig->sha1, sigp->signhash16, 2)) {
+ 	    res = RPMRC_FAIL;
+ 	    goto exit;
+ 	}
++	digest.type = siBuffer;
++	digest.data = dig->sha1;
++	digest.len = dig->sha1len;
+     }
+ 
+     /* Retrieve the matching public key. */
+@@ -1463,8 +1431,8 @@ verifyDSASignature(rpmts ts, /*@out@*/ char * t,
+ 	goto exit;
+ 
+     (void) rpmswEnter(rpmtsOp(ts, RPMTS_OP_SIGNATURE), 0);
+-    if (dsavrfy(&dig->p, &dig->q, &dig->g,
+-		&dig->hm, &dig->y, &dig->r, &dig->s))
++    if (VFY_VerifyDigest(&digest, dig->dsa, dig->dsasig,
++    		SEC_OID_ANSIX9_DSA_SIGNATURE_WITH_SHA1_DIGEST, NULL) == SECSuccess)
+ 	res = RPMRC_OK;
+     else
+ 	res = RPMRC_FAIL;
+diff --git a/python/Makefile.am b/python/Makefile.am
+index 1b8c83a..c1da992 100644
+--- a/python/Makefile.am
++++ b/python/Makefile.am
+@@ -17,7 +17,7 @@ INCLUDES = -I. \
+ 	-I$(top_srcdir)/rpmdb \
+ 	-I$(top_srcdir)/rpmio \
+ 	@WITH_LIBELF_INCLUDE@ \
+-	@WITH_BEECRYPT_INCLUDE@ \
++	@WITH_NSS_INCLUDE@ \
+ 	@WITH_POPT_INCLUDE@ \
+ 	-I$(top_srcdir)/misc \
+ 	-I$(pyincdir) \
+@@ -42,7 +42,7 @@ rpmdir = $(pylibdir)/site-packages/rpm
+ rpm_LTLIBRARIES = _rpmmodule.la
+ 
+ _rpmmodule_la_LDFLAGS = $(mylibs) $(LIBS) -module -avoid-version
+-_rpmmodule_la_LIBADD =  @WITH_BEECRYPT_LIB@
++_rpmmodule_la_LIBADD =  @WITH_NSS_LIB@
+ 
+ _rpmmodule_la_SOURCES = rpmmodule.c header-py.c \
+ 		       rpmal-py.c rpmds-py.c rpmdb-py.c rpmfd-py.c rpmfts-py.c \
+diff --git a/rpmdb/Makefile.am b/rpmdb/Makefile.am
+index 0f017f9..2393dd7 100644
+--- a/rpmdb/Makefile.am
++++ b/rpmdb/Makefile.am
+@@ -9,7 +9,7 @@ INCLUDES = -I. \
+ 	-I$(top_srcdir)/build \
+ 	-I$(top_srcdir)/lib \
+ 	-I$(top_srcdir)/rpmio \
+-	@WITH_BEECRYPT_INCLUDE@ \
++	@WITH_NSS_INCLUDE@ \
+ 	@WITH_POPT_INCLUDE@ \
+ 	-I$(top_srcdir)/misc \
+ 	@WITH_SQLITE3_INCLUDE@ \
+diff --git a/rpmio/Makefile.am b/rpmio/Makefile.am
+index 2d26dcc..44e4096 100644
+--- a/rpmio/Makefile.am
++++ b/rpmio/Makefile.am
+@@ -10,7 +10,7 @@ EXTRA_PROGRAMS = tax tdigest tdir tfts tget thkp tput tglob tinv tkey tring trpm
+ 
+ INCLUDES = -I. \
+ 	-I$(top_srcdir) \
+-	@WITH_BEECRYPT_INCLUDE@ \
++	@WITH_NSS_INCLUDE@ \
+ 	@WITH_NEON_INCLUDE@ \
+ 	@WITH_LUA_INCLUDE@ \
+ 	@WITH_POPT_INCLUDE@ \
+@@ -19,23 +19,21 @@ INCLUDES = -I. \
+ 
+ pkgincdir = $(pkgincludedir)
+ pkginc_HEADERS = \
+-	argv.h fts.h rpmdav.h \
++	argv.h base64.h fts.h rpmdav.h \
+ 	rpmio.h rpmurl.h rpmmacro.h rpmlog.h rpmmessages.h rpmerr.h rpmpgp.h \
+ 	rpmsq.h rpmsw.h ugid.h
+ noinst_HEADERS = rpmio_internal.h rpmlua.h rpmhook.h
+ 
+-BEECRYPTLOBJS = $(shell test X"@WITH_BEECRYPT_SUBDIR@" != X && cat $(top_builddir)/@WITH_BEECTYPT_SUBDIR@/listobjs)
+-
+ LDFLAGS = -L$(RPM_BUILD_ROOT)$(usrlibdir) -L$(DESTDIR)$(usrlibdir)
+ 
+ usrlibdir = $(libdir)@MARK64@
+ usrlib_LTLIBRARIES = librpmio.la
+ librpmio_la_SOURCES = \
+-	argv.c digest.c fts.c macro.c rpmdav.c \
++	argv.c base64.c digest.c fts.c macro.c rpmdav.c \
+ 	rpmhook.c rpmio.c rpmlog.c rpmlua.c rpmmalloc.c \
+ 	rpmpgp.c rpmrpc.c rpmsq.c rpmsw.c strcasecmp.c stubs.c url.c ugid.c
+ librpmio_la_LDFLAGS = -release 4.4 $(LDFLAGS) \
+-	@WITH_BEECRYPT_LIB@ \
++	@WITH_NSS_LIB@ \
+ 	@WITH_NEON_LIB@ \
+ 	@WITH_LUA_LIB@ \
+ 	@WITH_MAGIC_LIB@ \
+@@ -44,22 +42,10 @@ librpmio_la_LDFLAGS = -release 4.4 $(LDFLAGS) \
+ librpmio_la_LIBADD = # $(BEECRYPTLOBJS)
+ librpmio_la_DEPENDENCIES = # .created
+ 
+-.created:
+-	if test X"@WITH_BEECRYPT_SUBDIR@" != X; then \
+-	${MAKE} -C $(top_builddir)/@WITH_BEECRYPT_SUBDIR@ listobjs ; \
+-	for lo in $(BEECRYPTLOBJS); do \
+-	  [ -f $$lo ] || $(LN_S) $(top_builddir)/@WITH_BEECRYPT_SUBDIR@/$$lo $$lo ; \
+-	done \
+-	fi
+-	touch $@
+-
+-clean-local:
+-	rm -f $(BEECRYPTLOBJS) *.o .created
+-
+ #BUILT_SOURCES = rpmio.lcd
+ 
+ rpmio.lcd: Makefile.am ${librpmio_la_SOURCES} ${pkginc_HEADERS} ${noinst_HEADERS}
+-	-lclint -load ../beecrypt/beecrypt.lcd $(DEFS) $(INCLUDES) $(librpmio_la_SOURCES) -dump $@ 2>/dev/null
++	-lclint -load $(DEFS) $(INCLUDES) $(librpmio_la_SOURCES) -dump $@ 2>/dev/null
+ 
+ .PHONY:	sources
+ sources:
+@@ -105,7 +91,6 @@ tinv_LDFLAGS = @LDFLAGS_STATIC@
+ tinv_LDADD = librpmio.la $(top_builddir)/popt/libpopt.la
+ 
+ tkey_SOURCES = tkey.c
+-tkey_LDFLAGS = @LDFLAGS_STATIC@
+ tkey_LDADD = librpmio.la $(top_builddir)/popt/libpopt.la
+ 
+ tring_SOURCES = tring.c
+diff --git a/rpmio/base64.c b/rpmio/base64.c
+new file mode 100644
+index 0000000..b11b381
+--- /dev/null
++++ b/rpmio/base64.c
+@@ -0,0 +1,253 @@
++/* base64 encoder/decoder based on public domain implementation
++ * by Chris Venter */
++
++#include <arpa/inet.h>
++#include <stdlib.h>
++#include "base64.h"
++
++static char base64_encode_value(char value_in)
++{
++	static const char encoding[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
++	if (value_in > 63) return '=';
++	return encoding[(int)value_in];
++}
++
++static char *base64_encode_block(const char *plaintext_in, int length_in, char *codechar)
++{
++	const char *plainchar = plaintext_in;
++	const char *const plaintextend = plaintext_in + length_in;
++	char result;
++	char fragment;
++	
++	while (1) {
++		if (plainchar == plaintextend) {
++			return codechar;
++		}
++		fragment = *plainchar++;
++		result = (fragment & 0x0fc) >> 2;
++		*codechar++ = base64_encode_value(result);
++		result = (fragment & 0x003) << 4;
++		if (plainchar == plaintextend)
++		{
++			*codechar++ = base64_encode_value(result);
++			*codechar++ = '=';
++			*codechar++ = '=';
++			return codechar;
++		}
++		fragment = *plainchar++;
++		result |= (fragment & 0x0f0) >> 4;
++		*codechar++ = base64_encode_value(result);
++		result = (fragment & 0x00f) << 2;
++		if (plainchar == plaintextend)
++		{
++			*codechar++ = base64_encode_value(result);
++			*codechar++ = '=';
++			return codechar;
++		}
++		fragment = *plainchar++;
++		result |= (fragment & 0x0c0) >> 6;
++		*codechar++ = base64_encode_value(result);
++		result  = (fragment & 0x03f) >> 0;
++		*codechar++ = base64_encode_value(result);
++	}
++	/* control should not reach here */
++	return codechar;
++}
++
++#define BASE64_DEFAULT_LINE_LENGTH 64
++
++char *b64encode(const void *data, size_t len, int linelen)
++{
++	size_t encodedlen;
++	const char *dataptr = data;
++	char *output;
++	char *outptr;
++	
++	if (data == NULL)
++		return NULL;
++
++	if (linelen < 0)
++		linelen = BASE64_DEFAULT_LINE_LENGTH;
++
++	linelen /= 4;
++	encodedlen = ((len + 2) / 3) * 4;
++	if (linelen > 0) {
++		encodedlen += encodedlen/(linelen * 4) + 1;
++	}
++	++encodedlen; /* for zero termination */
++
++	output = malloc(encodedlen);
++	if (output == NULL)
++		return NULL;
++		
++	outptr = output;	
++	while (len > 0) {
++		if (linelen > 0 && len > linelen * 3) {
++			outptr = base64_encode_block(dataptr, linelen * 3, outptr);
++			len -= linelen * 3;
++			dataptr += linelen * 3;
++		} else {
++			outptr = base64_encode_block(dataptr, len, outptr);
++			len = 0;
++		}
++		if (linelen > 0) {
++			*outptr++ = '\n';
++		}
++	}
++	*outptr = '\0';
++	return output;
++}
++
++static int base64_decode_value(unsigned char value_in)
++{
++	static const int decoding[] = {62,-1,-1,-1,63,52,53,54,55,56,57,58,59,60,61,-1,-1,-1,-2,-1,-1,-1,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24,25,-1,-1,-1,-1,-1,-1,26,27,28,29,30,31,32,33,34,35,36,37,38,39,40,41,42,43,44,45,46,47,48,49,50,51};
++	value_in -= 43;
++	if (value_in > sizeof(decoding)/sizeof(int))
++		return -1;
++	return decoding[value_in];
++}
++
++static size_t base64_decode_block(const char *code_in, const size_t length_in, char *plaintext_out)
++{
++	const char *codechar = code_in;
++	char *plainchar = plaintext_out;
++	int fragment;
++	
++	*plainchar = 0;
++	
++	while (1)
++	{
++		do {
++			if (codechar == code_in+length_in)
++			{
++				return plainchar - plaintext_out;
++			}
++			fragment = base64_decode_value(*codechar++);
++		} while (fragment < 0);
++		*plainchar    = (char)((fragment & 0x03f) << 2);
++
++		do {
++			if (codechar == code_in+length_in)
++			{
++				return plainchar - plaintext_out;
++			}
++			fragment = base64_decode_value(*codechar++);
++		} while (fragment < 0);
++		*plainchar++ |= (char)((fragment & 0x030) >> 4);
++		*plainchar    = (char)((fragment & 0x00f) << 4);
++
++		do {
++			if (codechar == code_in+length_in)
++			{
++				return plainchar - plaintext_out;
++			}
++			fragment = base64_decode_value(*codechar++);
++		} while (fragment < 0);
++		*plainchar++ |= (char)((fragment & 0x03c) >> 2);
++		*plainchar    = (char)((fragment & 0x003) << 6);
++
++		do {
++			if (codechar == code_in+length_in)
++			{
++				return plainchar - plaintext_out;
++			}
++			fragment = base64_decode_value(*codechar++);
++		} while (fragment < 0);
++		*plainchar++   |= (char)(fragment & 0x03f);
++	}
++	/* control should not reach here */
++	return plainchar - plaintext_out;
++}
++
++int b64decode(const char *in, void **out, size_t *outlen)
++{
++	size_t outcnt = 0;
++	const char *inptr = in;
++
++	*out = NULL;
++
++	if (in == NULL) {
++		return 1;
++	}
++	
++	while (*inptr != '\0') {
++		/* assume all ASCII control chars as whitespace */
++		if (*inptr > 32) {
++			if (base64_decode_value(*inptr) != -1) {
++				++outcnt;
++			} else {
++				return 3;
++			}
++		}
++		++inptr;
++	}
++	
++	if (outcnt % 4 != 0)
++		return 2;
++	
++	outcnt = (outcnt / 4) * 3;
++	
++	*out = malloc(outcnt + 1); /* base64_decode_block can write one extra character */
++	
++	if (*out == NULL)
++		return 4;
++	
++	*outlen = base64_decode_block(in, inptr - in, *out);
++
++	return 0;
++}
++
++#define CRC24_INIT 0xb704ce
++#define CRC24_POLY 0x1864cfb
++
++char *b64crc(const unsigned char *data, size_t len)
++{
++	uint32_t crc = CRC24_INIT;
++	int i;
++
++	while (len--) {
++		crc ^= (*data++) << 16;
++		for (i = 0; i < 8; i++) {
++			crc <<= 1;
++			if (crc & 0x1000000)
++				crc ^= CRC24_POLY;
++		}
++	}
++	crc = htonl(crc & 0xffffff);
++	data = (unsigned char *)&crc;
++	++data;
++	return b64encode(data, 3, 0);
++}
++
++#ifdef BASE64_TEST
++#include <stdio.h>
++#include <string.h>
++
++int main(int argc, char *argv[]) 
++{
++	static char tst[]="wtrt8122čLýáj\x20s ~ýhž\t4\x02šjjmBvž^%$RTš#á.íěj\x1hčýčŤc+";
++	char *encoded;
++	void *decoded;
++	size_t size;
++	int err;
++	printf("Original: %lu\n%s\n", sizeof(tst)-1, tst);
++	encoded = b64encode(tst, sizeof(tst)-1, 64);
++	printf("Encoded: %lu\n%s\n", strlen(encoded), encoded);
++	if ((err = b64decode(encoded, &decoded, &size)) != 0) {
++		fprintf(stderr, "Error in decode: %d\n", err);
++		return 1;
++	}
++	printf("Decoded:\n%.*s\n", (int)size, (char *)decoded);
++	if (size != sizeof(tst)-1) {
++		fprintf(stderr, "Size differs orig: %lu new: %lu\n", sizeof(tst)-1, size);
++		return 1;
++	}
++	if (memcmp(tst, decoded, size) != 0) {
++		fprintf(stderr, "Decoded data differs.\n");
++		return 1;
++	}
++	fprintf(stderr, "OK\n");
++	return 0;
++}
++#endif
++
+diff --git a/rpmio/base64.h b/rpmio/base64.h
+new file mode 100644
+index 0000000..79ae0b6
+--- /dev/null
++++ b/rpmio/base64.h
+@@ -0,0 +1,29 @@
++/* base64 encoder/decoder based on public domain implementation
++ * by Chris Venter */
++
++#include <sys/types.h>
++
++/* returns malloced base64 encoded string
++ * lines are split with \n characters to be nearest lower multiple of linelen
++ * if linelen/4 == 0 lines are not split
++ * if linelen < 0 default line length (64) is used
++ * the returned string is empty when len == 0
++ * returns NULL on failures
++ */
++char *b64encode(const void *data, size_t len, int linelen);
++
++/* decodes from zero terminated base64 encoded string to a newly malloced buffer
++ * ignores whitespace characters in the input string
++ * return values:
++ *  0 - OK
++ *  1 - input is NULL
++ *  2 - invalid length
++ *  3 - invalid characters on input
++ *  4 - malloc failed
++ */
++int b64decode(const char *in, void **out, size_t *outlen);
++
++/* counts CRC24 and base64 encodes it in a malloced string
++ * returns NULL on failures
++ */
++char *b64crc(const unsigned char *data, size_t len);
+diff --git a/rpmio/digest.c b/rpmio/digest.c
+index 5b4cde8..894cf82 100644
+--- a/rpmio/digest.c
++++ b/rpmio/digest.c
+@@ -19,16 +19,7 @@
+  */
+ struct DIGEST_CTX_s {
+     rpmDigestFlags flags;	/*!< Bit(s) to control digest operation. */
+-    uint32_t datalen;		/*!< No. bytes in block of plaintext data. */
+-    uint32_t paramlen;		/*!< No. bytes of digest parameters. */
+-    uint32_t digestlen;		/*!< No. bytes of digest. */
+-    void * param;		/*!< Digest parameters. */
+-    int (*Reset) (void * param)
+-	/*@modifies param @*/;	/*!< Digest initialize. */
+-    int (*Update) (void * param, const byte * data, size_t size)
+-	/*@modifies param @*/;	/*!< Digest transform. */
+-    int (*Digest) (void * param, /*@out@*/ byte * digest)
+-	/*@modifies param, digest @*/;	/*!< Digest finish. */
++    HASHContext *hashctx;	/*!< Internal NSS hash context. */
+ };
+ 
+ /*@-boundsread@*/
+@@ -37,115 +28,98 @@ rpmDigestDup(DIGEST_CTX octx)
+ {
+     DIGEST_CTX nctx;
+     nctx = memcpy(xcalloc(1, sizeof(*nctx)), octx, sizeof(*nctx));
+-    nctx->param = memcpy(xcalloc(1, nctx->paramlen), octx->param, nctx->paramlen);
++    nctx->hashctx = HASH_Clone(octx->hashctx);
++    if (nctx->hashctx == NULL) {
++    	fprintf(stderr, "HASH_Clone failed\n");
++    	exit(EXIT_FAILURE);  /* FIX: callers do not bother checking error return */
++    }
+     return nctx;
+ }
+ /*@=boundsread@*/
+ 
+-DIGEST_CTX
+-rpmDigestInit(pgpHashAlgo hashalgo, rpmDigestFlags flags)
++static HASH_HashType
++getHashType(pgpHashAlgo hashalgo)
+ {
+-    DIGEST_CTX ctx = xcalloc(1, sizeof(*ctx));
+-    int xx;
+-
+-    ctx->flags = flags;
+-
+     switch (hashalgo) {
+     case PGPHASHALGO_MD5:
+-	ctx->digestlen = 16;
+-	ctx->datalen = 64;
+-/*@-sizeoftype@*/ /* FIX: union, not void pointer */
+-	ctx->paramlen = sizeof(md5Param);
+-/*@=sizeoftype@*/
+-	ctx->param = xcalloc(1, ctx->paramlen);
+-/*@-type@*/ /* FIX: cast? */
+-	ctx->Reset = (void *) md5Reset;
+-	ctx->Update = (void *) md5Update;
+-	ctx->Digest = (void *) md5Digest;
+-/*@=type@*/
++	return HASH_AlgMD5;
+ 	break;
+     case PGPHASHALGO_SHA1:
+-	ctx->digestlen = 20;
+-	ctx->datalen = 64;
+-/*@-sizeoftype@*/ /* FIX: union, not void pointer */
+-	ctx->paramlen = sizeof(sha1Param);
+-/*@=sizeoftype@*/
+-	ctx->param = xcalloc(1, ctx->paramlen);
+-/*@-type@*/ /* FIX: cast? */
+-	ctx->Reset = (void *) sha1Reset;
+-	ctx->Update = (void *) sha1Update;
+-	ctx->Digest = (void *) sha1Digest;
+-/*@=type@*/
++	return HASH_AlgSHA1;
+ 	break;
+-#if HAVE_BEECRYPT_API_H
+     case PGPHASHALGO_SHA256:
+-	ctx->digestlen = 32;
+-	ctx->datalen = 64;
+-/*@-sizeoftype@*/ /* FIX: union, not void pointer */
+-	ctx->paramlen = sizeof(sha256Param);
+-/*@=sizeoftype@*/
+-	ctx->param = xcalloc(1, ctx->paramlen);
+-/*@-type@*/ /* FIX: cast? */
+-	ctx->Reset = (void *) sha256Reset;
+-	ctx->Update = (void *) sha256Update;
+-	ctx->Digest = (void *) sha256Digest;
+-/*@=type@*/
++	return HASH_AlgSHA256;
+ 	break;
+     case PGPHASHALGO_SHA384:
+-	ctx->digestlen = 48;
+-	ctx->datalen = 128;
+-/*@-sizeoftype@*/ /* FIX: union, not void pointer */
+-	ctx->paramlen = sizeof(sha384Param);
+-/*@=sizeoftype@*/
+-	ctx->param = xcalloc(1, ctx->paramlen);
+-/*@-type@*/ /* FIX: cast? */
+-	ctx->Reset = (void *) sha384Reset;
+-	ctx->Update = (void *) sha384Update;
+-	ctx->Digest = (void *) sha384Digest;
+-/*@=type@*/
++	return HASH_AlgSHA384;
+ 	break;
+     case PGPHASHALGO_SHA512:
+-	ctx->digestlen = 64;
+-	ctx->datalen = 128;
+-/*@-sizeoftype@*/ /* FIX: union, not void pointer */
+-	ctx->paramlen = sizeof(sha512Param);
+-/*@=sizeoftype@*/
+-	ctx->param = xcalloc(1, ctx->paramlen);
+-/*@-type@*/ /* FIX: cast? */
+-	ctx->Reset = (void *) sha512Reset;
+-	ctx->Update = (void *) sha512Update;
+-	ctx->Digest = (void *) sha512Digest;
+-/*@=type@*/
++	return HASH_AlgSHA512;
+ 	break;
+-#endif
+     case PGPHASHALGO_RIPEMD160:
+     case PGPHASHALGO_MD2:
+     case PGPHASHALGO_TIGER192:
+     case PGPHASHALGO_HAVAL_5_160:
+     default:
++	return HASH_AlgNULL;
++	/*@notreached@*/ break;
++    }
++}
++
++size_t
++rpmDigestLength(pgpHashAlgo hashalgo)
++{
++    return HASH_ResultLen(getHashType(hashalgo));
++}
++
++DIGEST_CTX
++rpmDigestInit(pgpHashAlgo hashalgo, rpmDigestFlags flags)
++{
++    HASH_HashType type;
++    DIGEST_CTX ctx = xcalloc(1, sizeof(*ctx));
++
++    ctx->flags = flags;
++
++    type = getHashType(hashalgo);
++    if (type == HASH_AlgNULL) {
+ 	free(ctx);
+ 	return NULL;
+-	/*@notreached@*/ break;
+     }
+ 
+-/*@-boundsread@*/
+-    xx = (*ctx->Reset) (ctx->param);
+-/*@=boundsread@*/
++    ctx->hashctx = HASH_Create(type);
++    if (ctx->hashctx == NULL) {
++    	free(ctx);
++    	return NULL;
++    }
+ 
+-DPRINTF((stderr, "*** Init(%x) ctx %p param %p\n", flags, ctx, ctx->param));
++    HASH_Begin(ctx->hashctx);
++    
++DPRINTF((stderr, "*** Init(%x) ctx %p hashctx %p\n", flags, ctx, ctx->hashctx));
+     return ctx;
+ }
+ 
+-/*@-mustmod@*/ /* LCL: ctx->param may be modified, but ctx is abstract @*/
++/*@-mustmod@*/ /* LCL: ctx->hashctx may be modified, but ctx is abstract @*/
+ int
+ rpmDigestUpdate(DIGEST_CTX ctx, const void * data, size_t len)
+ {
++    unsigned int partlen;
++    const unsigned char *ptr = data;
++
+     if (ctx == NULL)
+ 	return -1;
+ 
+-DPRINTF((stderr, "*** Update(%p,%p,%d) param %p \"%s\"\n", ctx, data, len, ctx->param, ((char *)data)));
++DPRINTF((stderr, "*** Update(%p,%p,%d) hashctx %p \"%s\"\n", ctx, data, len, ctx->hashctx, ((char *)data)));
+ /*@-boundsread@*/
+-    return (*ctx->Update) (ctx->param, data, len);
++   partlen = ~(unsigned int)0xFF;
++   while (len > 0) {
++   	if (len < partlen) {
++   		partlen = (unsigned int)len;
++   	}
++	HASH_Update(ctx->hashctx, ptr, partlen);
++	ptr += partlen;
++	len -= partlen;
++   }
++   return 0;
+ /*@=boundsread@*/
+ }
+ /*@=mustmod@*/
+@@ -154,35 +128,37 @@ DPRINTF((stderr, "*** Update(%p,%p,%d) param %p \"%s\"\n", ctx, data, len, ctx->
+ int
+ rpmDigestFinal(DIGEST_CTX ctx, void ** datap, size_t *lenp, int asAscii)
+ {
+-    byte * digest;
++    unsigned char * digest;
+     char * t;
+     int i;
++    unsigned int digestlen;
+ 
+     if (ctx == NULL)
+ 	return -1;
+-    digest = xmalloc(ctx->digestlen);
++    digestlen = HASH_ResultLenContext(ctx->hashctx);
++    digest = xmalloc(digestlen);
+ 
+-DPRINTF((stderr, "*** Final(%p,%p,%p,%d) param %p digest %p\n", ctx, datap, lenp, asAscii, ctx->param, digest));
+-/*@-noeffectuncon@*/ /* FIX: check rc */
+-    (void) (*ctx->Digest) (ctx->param, digest);
++DPRINTF((stderr, "*** Final(%p,%p,%p,%d) hashctx %p digest %p\n", ctx, datap, lenp, asAscii, ctx->hashctx, digest));
++/*@-noeffectuncon@*/
++    HASH_End(ctx->hashctx, digest, &digestlen, digestlen);
+ /*@=noeffectuncon@*/
+ 
+     /* Return final digest. */
+ /*@-branchstate@*/
+     if (!asAscii) {
+-	if (lenp) *lenp = ctx->digestlen;
++	if (lenp) *lenp = digestlen;
+ 	if (datap) {
+ 	    *datap = digest;
+ 	    digest = NULL;
+ 	}
+     } else {
+-	if (lenp) *lenp = (2*ctx->digestlen) + 1;
++	if (lenp) *lenp = (2*digestlen) + 1;
+ 	if (datap) {
+ 	    const byte * s = (const byte *) digest;
+ 	    static const char hex[] = "0123456789abcdef";
+ 
+-	    *datap = t = xmalloc((2*ctx->digestlen) + 1);
+-	    for (i = 0 ; i < ctx->digestlen; i++) {
++	    *datap = t = xmalloc((2*digestlen) + 1);
++	    for (i = 0 ; i < digestlen; i++) {
+ 		*t++ = hex[ (unsigned)((*s >> 4) & 0x0f) ];
+ 		*t++ = hex[ (unsigned)((*s++   ) & 0x0f) ];
+ 	    }
+@@ -191,11 +167,10 @@ DPRINTF((stderr, "*** Final(%p,%p,%p,%d) param %p digest %p\n", ctx, datap, lenp
+     }
+ /*@=branchstate@*/
+     if (digest) {
+-	memset(digest, 0, ctx->digestlen);	/* In case it's sensitive */
++	memset(digest, 0, digestlen);	/* In case it's sensitive */
+ 	free(digest);
+     }
+-    memset(ctx->param, 0, ctx->paramlen);	/* In case it's sensitive */
+-    free(ctx->param);
++    HASH_Destroy(ctx->hashctx);
+     memset(ctx, 0, sizeof(*ctx));	/* In case it's sensitive */
+     free(ctx);
+     return 0;
+diff --git a/rpmio/rpmio_internal.h b/rpmio/rpmio_internal.h
+index c2906e8..f92ee8a 100644
+--- a/rpmio/rpmio_internal.h
++++ b/rpmio/rpmio_internal.h
+@@ -9,30 +9,14 @@
+ #include <rpmio.h>
+ #include <rpmurl.h>
+ 
+-#if HAVE_BEECRYPT_API_H
+-#include <api.h>
+-#else
+-#include <beecrypt.api.h>
+-#endif
+-
+ #include <rpmpgp.h>
+ #include <rpmsw.h>
+-
+-/* Drag in the beecrypt includes. */
+-#include <beecrypt.h>
+ #include <base64.h>
+-#include <dsa.h>
+-#include <endianness.h>
+-#include <md5.h>
+-#include <mp.h>
+-#include <rsa.h>
+-#include <rsapk.h>
+-#include <sha1.h>
+-#if HAVE_BEECRYPT_API_H
+-#include <sha256.h>
+-#include <sha384.h>
+-#include <sha512.h>
+-#endif
++
++#include "nss.h"
++#include "sechash.h"
++#include "keyhi.h"
++#include "cryptohi.h"
+ 
+ /** \ingroup rpmio
+  * Values parsed from OpenPGP signature/pubkey packet(s).
+@@ -85,20 +69,13 @@ struct pgpDig_s {
+     void * md5;			/*!< (rsa) V3 signature hash. */
+     size_t md5len;		/*!< (rsa) V3 signature hash length. */
+ 
+-    /* DSA parameters. */
+-    mpbarrett p;
+-    mpbarrett q;
+-    mpnumber g;
+-    mpnumber y;
+-    mpnumber hm;
+-    mpnumber r;
+-    mpnumber s;
+-
+-    /* RSA parameters. */
+-    rsapk rsa_pk;
+-    mpnumber m;
+-    mpnumber c;
+-    mpnumber rsahm;
++    /* DSA parameters */
++    SECKEYPublicKey *dsa;
++    SECItem *dsasig;
++
++    /* RSA parameters */
++    SECKEYPublicKey *rsa;
++    SECItem *rsasig;
+ };
+ 
+ /** \ingroup rpmio
+diff --git a/rpmio/rpmpgp.c b/rpmio/rpmpgp.c
+index 5d2c6f4..2cc03f8 100644
+--- a/rpmio/rpmpgp.c
++++ b/rpmio/rpmpgp.c
+@@ -17,6 +17,8 @@ static int _debug = 0;
+ /*@unchecked@*/
+ static int _print = 0;
+ 
++static int _crypto_initialized = 0;
++
+ /*@unchecked@*/ /*@null@*/
+ static pgpDig _dig = NULL;
+ 
+@@ -260,39 +262,101 @@ const char * pgpMpiHex(const byte *p)
+ /**
+  * @return		0 on success
+  */
+-static int pgpHexSet(const char * pre, int lbits,
+-		/*@out@*/ mpnumber * mpn, const byte * p, const byte * pend)
++static int pgpMpiSet(const char * pre, int lbits,
++		/*@out@*/ void *dest, const byte * p, const byte * pend)
+ 	/*@globals fileSystem @*/
+-	/*@modifies mpn, fileSystem @*/
++	/*@modifies dest, fileSystem @*/
+ {
+     unsigned int mbits = pgpMpiBits(p);
+     unsigned int nbits;
+     unsigned int nbytes;
+-    char * t;
++    char *t = dest;
+     unsigned int ix;
+ 
+     if ((p + ((mbits+7) >> 3)) > pend)
+ 	return 1;
+ 
++    if (mbits > lbits)
++	return 1;
++
+     nbits = (lbits > mbits ? lbits : mbits);
+     nbytes = ((nbits + 7) >> 3);
+-    t = xmalloc(2*nbytes+1);
+-    ix = 2 * ((nbits - mbits) >> 3);
++    ix = (nbits - mbits) >> 3;
+ 
+ if (_debug)
+-fprintf(stderr, "*** mbits %u nbits %u nbytes %u t %p[%d] ix %u\n", mbits, nbits, nbytes, t, (2*nbytes+1), ix);
+-    if (ix > 0) memset(t, (int)'0', ix);
+-    strcpy(t+ix, pgpMpiHex(p));
++fprintf(stderr, "*** mbits %u nbits %u nbytes %u ix %u\n", mbits, nbits, nbytes, ix);
++    if (ix > 0) memset(t, '\0', ix);
++    memcpy(t+ix, p+2, nbytes-ix);
+ if (_debug)
+-fprintf(stderr, "*** %s %s\n", pre, t);
+-    (void) mpnsethex(mpn, t);
+-    t = _free(t);
+-if (_debug && _print)
+-fprintf(stderr, "\t %s ", pre), mpfprintln(stderr, mpn->size, mpn->data);
++fprintf(stderr, "*** %s %s\n", pre, pgpHexStr(dest, nbytes));
++
+     return 0;
+ }
++
++/**
++ * @return		NULL on error
++ */
++static SECItem *pgpMpiItem(PRArenaPool *arena, /*@out@*/ SECItem *item, const byte *p)
++	/*@globals fileSystem @*/
++	/*@modifies dest, fileSystem @*/
++{
++    unsigned int nbytes = pgpMpiLen(p)-2;
++
++    if (item == NULL) {
++    	if ((item=SECITEM_AllocItem(arena, item, nbytes)) == NULL)
++    	    return item;
++    } else {
++    	if (arena != NULL)
++    	    item->data = PORT_ArenaGrow(arena, item->data, item->len, nbytes);
++    	else
++    	    item->data = PORT_Realloc(item->data, nbytes);
++    	
++    	if (item->data == NULL) {
++    	    if (arena == NULL)
++    		SECITEM_FreeItem(item, PR_TRUE);
++    	    return NULL;
++    	}
++    }
++
++    memcpy(item->data, p+2, nbytes);
++    item->len = nbytes;
++    return item;
++}
+ /*@=boundswrite@*/
+ 
++static SECKEYPublicKey *pgpNewPublicKey(KeyType type)
++{
++    PRArenaPool *arena;
++    SECKEYPublicKey *key;
++    
++    arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
++    if (arena == NULL)
++	return NULL;
++    
++    key = PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
++    
++    if (key == NULL) {
++	PORT_FreeArena(arena, PR_FALSE);
++	return NULL;
++    }
++    
++    key->keyType = type;
++    key->pkcs11ID = CK_INVALID_HANDLE;
++    key->pkcs11Slot = NULL;
++    key->arena = arena;
++    return key;
++}
++
++static SECKEYPublicKey *pgpNewRSAKey(void)
++{
++    return pgpNewPublicKey(rsaKey);
++}
++
++static SECKEYPublicKey *pgpNewDSAKey(void)
++{
++    return pgpNewPublicKey(dsaKey);
++}
++
+ int pgpPrtSubType(const byte *h, unsigned int hlen, pgpSigType sigtype)
+ {
+     const byte *p = h;
+@@ -407,6 +471,10 @@ static const char * pgpSigDSA[] = {
+ };
+ /*@=varuse =readonlytrans @*/
+ 
++#ifndef DSA_SUBPRIME_LEN
++#define DSA_SUBPRIME_LEN 20
++#endif
++
+ static int pgpPrtSigParams(/*@unused@*/ pgpTag tag, byte pubkey_algo, byte sigtype,
+ 		const byte *p, const byte *h, unsigned int hlen)
+ 	/*@globals fileSystem @*/
+@@ -414,7 +482,13 @@ static int pgpPrtSigParams(/*@unused@*/ pgpTag tag, byte pubkey_algo, byte sigty
+ {
+     const byte * pend = h + hlen;
+     int i;
++    SECItem dsaraw;
++    unsigned char dsabuf[2*DSA_SUBPRIME_LEN];
+ 
++    dsaraw.type = 0;
++    dsaraw.data = dsabuf;
++    dsaraw.len = sizeof(dsabuf);
++    
+     for (i = 0; p < pend; i++, p += pgpMpiLen(p)) {
+ 	if (pubkey_algo == PGPPUBKEYALGO_RSA) {
+ 	    if (i >= 1) break;
+@@ -423,9 +497,9 @@ static int pgpPrtSigParams(/*@unused@*/ pgpTag tag, byte pubkey_algo, byte sigty
+ 	    {
+ 		switch (i) {
+ 		case 0:		/* m**d */
+-		    (void) mpnsethex(&_dig->c, pgpMpiHex(p));
+-if (_debug && _print)
+-fprintf(stderr, "\t  m**d = "),  mpfprintln(stderr, _dig->c.size, _dig->c.data);
++		    _dig->rsasig = pgpMpiItem(NULL, _dig->rsasig, p);
++		    if (_dig->rsasig == NULL)
++			return 1;
+ 		    /*@switchbreak@*/ break;
+ 		default:
+ 		    /*@switchbreak@*/ break;
+@@ -440,11 +514,21 @@ fprintf(stderr, "\t  m**d = "),  mpfprintln(stderr, _dig->c.size, _dig->c.data);
+ 		int xx;
+ 		xx = 0;
+ 		switch (i) {
+-		case 0:		/* r */
+-		    xx = pgpHexSet(pgpSigDSA[i], 160, &_dig->r, p, pend);
++		case 0:
++		    memset(dsaraw.data, '\0', 2*DSA_SUBPRIME_LEN);
++				/* r */
++		    xx = pgpMpiSet(pgpSigDSA[i], DSA_SUBPRIME_LEN*8, dsaraw.data, p, pend);
+ 		    /*@switchbreak@*/ break;
+ 		case 1:		/* s */
+-		    xx = pgpHexSet(pgpSigDSA[i], 160, &_dig->s, p, pend);
++		    xx = pgpMpiSet(pgpSigDSA[i], DSA_SUBPRIME_LEN*8, dsaraw.data + DSA_SUBPRIME_LEN, p, pend);
++		    if (_dig->dsasig != NULL)
++		    	SECITEM_FreeItem(_dig->dsasig, PR_FALSE);
++		    else if ((_dig->dsasig=SECITEM_AllocItem(NULL, NULL, 0)) == NULL) {
++		        xx = 1;
++		        /*@switchbreak@*/ break;
++		    }
++		    if (DSAU_EncodeDerSig(_dig->dsasig, &dsaraw) != SECSuccess)
++		    	xx = 1;
+ 		    /*@switchbreak@*/ break;
+ 		default:
+ 		    xx = 1;
+@@ -629,16 +713,17 @@ static const byte * pgpPrtPubkeyParams(byte pubkey_algo,
+ 	if (pubkey_algo == PGPPUBKEYALGO_RSA) {
+ 	    if (i >= 2) break;
+ 	    if (_dig) {
++		if (_dig->rsa == NULL) {
++		    _dig->rsa = pgpNewRSAKey();
++		    if (_dig->rsa == NULL)
++			break; /* error abort? */
++		}
+ 		switch (i) {
+ 		case 0:		/* n */
+-		    (void) mpbsethex(&_dig->rsa_pk.n, pgpMpiHex(p));
+-if (_debug && _print)
+-fprintf(stderr, "\t     n = "),  mpfprintln(stderr, _dig->rsa_pk.n.size, _dig->rsa_pk.n.modl);
++		    pgpMpiItem(_dig->rsa->arena, &_dig->rsa->u.rsa.modulus, p);
+ 		    /*@switchbreak@*/ break;
+ 		case 1:		/* e */
+-		    (void) mpnsethex(&_dig->rsa_pk.e, pgpMpiHex(p));
+-if (_debug && _print)
+-fprintf(stderr, "\t     e = "),  mpfprintln(stderr, _dig->rsa_pk.e.size, _dig->rsa_pk.e.data);
++		    pgpMpiItem(_dig->rsa->arena, &_dig->rsa->u.rsa.publicExponent, p);
+ 		    /*@switchbreak@*/ break;
+ 		default:
+ 		    /*@switchbreak@*/ break;
+@@ -648,26 +733,23 @@ fprintf(stderr, "\t     e = "),  mpfprintln(stderr, _dig->rsa_pk.e.size, _dig->r
+ 	} else if (pubkey_algo == PGPPUBKEYALGO_DSA) {
+ 	    if (i >= 4) break;
+ 	    if (_dig) {
++		if (_dig->dsa == NULL) {
++		    _dig->dsa = pgpNewDSAKey();
++		    if (_dig->dsa == NULL)
++			break; /* error abort? */
++		}
+ 		switch (i) {
+ 		case 0:		/* p */
+-		    (void) mpbsethex(&_dig->p, pgpMpiHex(p));
+-if (_debug && _print)
+-fprintf(stderr, "\t     p = "),  mpfprintln(stderr, _dig->p.size, _dig->p.modl);
++		    pgpMpiItem(_dig->dsa->arena, &_dig->dsa->u.dsa.params.prime, p);
+ 		    /*@switchbreak@*/ break;
+ 		case 1:		/* q */
+-		    (void) mpbsethex(&_dig->q, pgpMpiHex(p));
+-if (_debug && _print)
+-fprintf(stderr, "\t     q = "),  mpfprintln(stderr, _dig->q.size, _dig->q.modl);
++		    pgpMpiItem(_dig->dsa->arena, &_dig->dsa->u.dsa.params.subPrime, p);
+ 		    /*@switchbreak@*/ break;
+ 		case 2:		/* g */
+-		    (void) mpnsethex(&_dig->g, pgpMpiHex(p));
+-if (_debug && _print)
+-fprintf(stderr, "\t     g = "),  mpfprintln(stderr, _dig->g.size, _dig->g.data);
++		    pgpMpiItem(_dig->dsa->arena, &_dig->dsa->u.dsa.params.base, p);
+ 		    /*@switchbreak@*/ break;
+ 		case 3:		/* y */
+-		    (void) mpnsethex(&_dig->y, pgpMpiHex(p));
+-if (_debug && _print)
+-fprintf(stderr, "\t     y = "),  mpfprintln(stderr, _dig->y.size, _dig->y.data);
++		    pgpMpiItem(_dig->dsa->arena, &_dig->dsa->u.dsa.publicValue, p);
+ 		    /*@switchbreak@*/ break;
+ 		default:
+ 		    /*@switchbreak@*/ break;
+@@ -1023,6 +1105,7 @@ int pgpPrtPkt(const byte *pkt, unsigned int pleft)
+ pgpDig pgpNewDig(void)
+ {
+     pgpDig dig = xcalloc(1, sizeof(*dig));
++
+     return dig;
+ }
+ 
+@@ -1047,14 +1130,27 @@ void pgpCleanDig(pgpDig dig)
+ 
+ 	dig->md5 = _free(dig->md5);
+ 	dig->sha1 = _free(dig->sha1);
+-	mpnfree(&dig->hm);
+-	mpnfree(&dig->r);
+-	mpnfree(&dig->s);
+-
+-	(void) rsapkFree(&dig->rsa_pk);
+-	mpnfree(&dig->m);
+-	mpnfree(&dig->c);
+-	mpnfree(&dig->rsahm);
++
++	if (dig->dsa != NULL) {
++	    SECKEY_DestroyPublicKey(dig->dsa);
++	    dig->dsa = NULL;
++	}
++
++	if (dig->dsasig != NULL) {
++	    SECITEM_ZfreeItem(dig->dsasig, PR_TRUE);
++	    dig->dsasig = NULL;
++	}
++
++	if (dig->rsa != NULL) {
++	    SECKEY_DestroyPublicKey(dig->rsa);
++	    dig->rsa = NULL;
++	}
++
++	if (dig->rsasig != NULL) {
++	    SECITEM_ZfreeItem(dig->rsasig, PR_TRUE);
++	    dig->rsasig = NULL;
++	}
++
+     }
+ /*@-nullstate@*/
+     return;
+@@ -1082,14 +1178,6 @@ pgpDig pgpFreeDig(/*@only@*/ /*@null@*/ pgpDig dig)
+ 	/*@=branchstate@*/
+ 	dig->sha1ctx = NULL;
+ 
+-	mpbfree(&dig->p);
+-	mpbfree(&dig->q);
+-	mpnfree(&dig->g);
+-	mpnfree(&dig->y);
+-	mpnfree(&dig->hm);
+-	mpnfree(&dig->r);
+-	mpnfree(&dig->s);
+-
+ #ifdef	NOTYET
+ 	/*@-branchstate@*/
+ 	if (dig->hdrmd5ctx != NULL)
+@@ -1104,12 +1192,6 @@ pgpDig pgpFreeDig(/*@only@*/ /*@null@*/ pgpDig dig)
+ 	/*@=branchstate@*/
+ 	dig->md5ctx = NULL;
+ 
+-	mpbfree(&dig->rsa_pk.n);
+-	mpnfree(&dig->rsa_pk.e);
+-	mpnfree(&dig->m);
+-	mpnfree(&dig->c);
+-	mpnfree(&dig->hm);
+-
+ 	dig = _free(dig);
+     }
+     return dig;
+@@ -1295,20 +1377,13 @@ char * pgpArmorWrap(int atype, const unsigned char * s, size_t ns)
+ {
+     const char * enc;
+     char * t;
+-    size_t nt;
++    size_t nt = 0;
+     char * val;
+-    int lc;
+ 
+-    nt = ((ns + 2) / 3) * 4;
+-    /*@-globs@*/
+-    /* Add additional bytes necessary for eol string(s). */
+-    if (b64encode_chars_per_line > 0 && b64encode_eolstr != NULL) {
+-	lc = (nt + b64encode_chars_per_line - 1) / b64encode_chars_per_line;
+-       if (((nt + b64encode_chars_per_line - 1) % b64encode_chars_per_line) != 0)
+-        ++lc;
+-	nt += lc * strlen(b64encode_eolstr);
++    enc = b64encode(s, ns, -1);
++    if (enc != NULL) {
++    	nt = strlen(enc);
+     }
+-    /*@=globs@*/
+ 
+     nt += 512;	/* XXX slop for armor and crc */
+ 
+@@ -1320,9 +1395,9 @@ char * pgpArmorWrap(int atype, const unsigned char * s, size_t ns)
+     /*@-globs@*/
+     t = stpcpy( stpcpy(t, "-----\nVersion: rpm-"), VERSION);
+     /*@=globs@*/
+-    t = stpcpy(t, " (beecrypt-4.1.2)\n\n");
++    t = stpcpy(t, " (NSS-3)\n\n");
+ 
+-    if ((enc = b64encode(s, ns)) != NULL) {
++    if (enc != NULL) {
+ 	t = stpcpy(t, enc);
+ 	enc = _free(enc);
+ 	if ((enc = b64crc(s, ns)) != NULL) {
+@@ -1339,5 +1414,18 @@ char * pgpArmorWrap(int atype, const unsigned char * s, size_t ns)
+ 
+     return val;
+ }
+-
+ /*@=boundsread@*/
++
++int rpmInitCrypto(void) {
++    int rc = 0;
++
++    if (!_crypto_initialized && NSS_NoDB_Init(NULL) != SECSuccess) {
++        rc = -1;
++    } else {
++        _crypto_initialized = 1;
++    }
++
++    return rc;
++}
++
++
+diff --git a/rpmio/rpmpgp.h b/rpmio/rpmpgp.h
+index d90d4e7..c1e2db5 100644
+--- a/rpmio/rpmpgp.h
++++ b/rpmio/rpmpgp.h
+@@ -12,11 +12,7 @@
+ 
+ #include <string.h>
+ 
+-#if !defined(_BEECRYPT_API_H)
+-/*@-redef@*/
+ typedef unsigned char byte;
+-/*@=redef@*/
+-#endif	/* _BEECRYPT_API_H */
+ 
+ /**
+  */
+@@ -1384,6 +1380,15 @@ unsigned int pgpCRC(const byte *octets, size_t len)
+ }
+ 
+ /** \ingroup rpmio
++ * Perform cryptography initialization.
++ * It must be called before any cryptography can be used within rpm.
++ * It's not normally necessary to call it directly as it's called in
++ * general rpm initialization routines.
++ * @return		0 on success, -1 on failure
++ */
++int rpmInitCrypto(void);
++
++/** \ingroup rpmio
+  * Duplicate a digest context.
+  * @param octx		existing digest context
+  * @return		duplicated digest context
+@@ -1393,6 +1398,15 @@ DIGEST_CTX rpmDigestDup(DIGEST_CTX octx)
+ 	/*@*/;
+ 
+ /** \ingroup rpmio
++ * Obtain digest length in bytes.
++ * @param hashalgo	type of digest
++ * @return		digest length
++ */
++/*@only@*/ /*@null@*/
++size_t rpmDigestLength(pgpHashAlgo hashalgo)
++	/*@*/;
++
++/** \ingroup rpmio
+  * Initialize digest.
+  * Set bit count to 0 and buffer to mysterious initialization constants.
+  * @param hashalgo	type of digest
+diff --git a/rpmio/tkey.c b/rpmio/tkey.c
+index e03dba0..9fb7805 100644
+--- a/rpmio/tkey.c
++++ b/rpmio/tkey.c
+@@ -31,7 +31,7 @@ fprintf(stderr, "*** sig is\n%s\n", sig);
+ 	return rc;
+     }
+ 
+-    if ((enc = b64encode(dec, declen)) == NULL) {
++    if ((enc = b64encode(dec, declen, -1)) == NULL) {
+ 	fprintf(stderr, "*** b64encode failed\n");
+ 	return rc;
+     }
+@@ -51,52 +51,40 @@ fprintf(stderr, "??? %5d %02x != %02x '%c' != '%c'\n", i, (*s & 0xff), (*t & 0xf
+     return rc;
+ }
+ 
+-/* FIPS-186 test vectors. */
+-static const char * fips_p = "8df2a494492276aa3d25759bb06869cbeac0d83afb8d0cf7cbb8324f0d7882e5d0762fc5b7210eafc2e9adac32ab7aac49693dfbf83724c2ec0736ee31c80291";
+-static const char * fips_q = "c773218c737ec8ee993b4f2ded30f48edace915f";
+-static const char * fips_g = "626d027839ea0a13413163a55b4cb500299d5522956cefcb3bff10f399ce2c2e71cb9de5fa24babf58e5b79521925c9cc42e9f6f464b088cc572af53e6d78802";
+-
+-static const char * fips_hm = "a9993e364706816aba3e25717850c26c9cd0d89d";
+-
+-static const char * fips_y = "19131871d75b1612a819f29d78d1b0d7346f7aa77bb62a859bfd6c5675da9d212d3a36ef1672ef660b8c7c255cc0ec74858fba33f44c06699630a76b030ee333";
+-
+-static const char * fips_r = "8bac1ab66410435cb7181f95b16ab97c92b341c0";
+-static const char * fips_s = "41e2345f1f56df2458f426d155b4ba2db6dcd8c8";
+-
+ /* Secret key */
+-static const char * jbjSecretDSA = "
+-lQFvBDu6XHwRAwCTIHRgKeIlOFUIEZeJVYSrXn0eUrM5S8OF471tTc+IV7AwiXBR
+-zCFCan4lO1ipmoAipyN2A6ZX0HWOcWdYlWz2adxA7l8JNiZTzkemA562xwex2wLy
+-AQWVTtRN6jv0LccAoN4UWZkIvkT6tV918sEvDEggGARxAv9190RhrDq/GMqd+AHm
+-qWrRkrBRHDUBBL2fYEuU3gFekYrW5CDIN6s3Mcq/yUsvwHl7bwmoqbf2qabbyfnv
+-Y66ETOPKLcw67ggcptHXHcwlvpfJmHKpjK+ByzgauPXXbRAC+gKDjzXL0kAQxjmT
+-2D+16O4vI8Emlx2JVcGLlq/aWhspvQWIzN6PytA3iKZ6uzesrM7yXmqzgodZUsJh
+-1wwl/0K5OIJn/oD41UayU8RXNER8SzDYvDYsJymFRwE1s58lL/8DAwJUAllw1pdZ
+-WmBIoAvRiv7kE6hWfeCvZzdBVgrHYrp8ceUa3OdulGfYw/0sIzpEU0FfZmFjdG9y
+-OgAA30gJ4JMFKVfthnDCHHL+O8lNxykKBmrgVPLClue0KUplZmYgSm9obnNvbiAo
+-QVJTIE4zTlBRKSA8amJqQHJlZGhhdC5jb20+iFcEExECABcFAju6XHwFCwcKAwQD
+-FQMCAxYCAQIXgAAKCRCB0qVW2I6DmQU6AJ490bVWZuM4yCOh8MWj6qApCr1/gwCf
+-f3+QgXFXAeTyPtMmReyWxThABtE=
++static const char * jbjSecretDSA = "\n\
++lQFvBDu6XHwRAwCTIHRgKeIlOFUIEZeJVYSrXn0eUrM5S8OF471tTc+IV7AwiXBR\n\
++zCFCan4lO1ipmoAipyN2A6ZX0HWOcWdYlWz2adxA7l8JNiZTzkemA562xwex2wLy\n\
++AQWVTtRN6jv0LccAoN4UWZkIvkT6tV918sEvDEggGARxAv9190RhrDq/GMqd+AHm\n\
++qWrRkrBRHDUBBL2fYEuU3gFekYrW5CDIN6s3Mcq/yUsvwHl7bwmoqbf2qabbyfnv\n\
++Y66ETOPKLcw67ggcptHXHcwlvpfJmHKpjK+ByzgauPXXbRAC+gKDjzXL0kAQxjmT\n\
++2D+16O4vI8Emlx2JVcGLlq/aWhspvQWIzN6PytA3iKZ6uzesrM7yXmqzgodZUsJh\n\
++1wwl/0K5OIJn/oD41UayU8RXNER8SzDYvDYsJymFRwE1s58lL/8DAwJUAllw1pdZ\n\
++WmBIoAvRiv7kE6hWfeCvZzdBVgrHYrp8ceUa3OdulGfYw/0sIzpEU0FfZmFjdG9y\n\
++OgAA30gJ4JMFKVfthnDCHHL+O8lNxykKBmrgVPLClue0KUplZmYgSm9obnNvbiAo\n\
++QVJTIE4zTlBRKSA8amJqQHJlZGhhdC5jb20+iFcEExECABcFAju6XHwFCwcKAwQD\n\
++FQMCAxYCAQIXgAAKCRCB0qVW2I6DmQU6AJ490bVWZuM4yCOh8MWj6qApCr1/gwCf\n\
++f3+QgXFXAeTyPtMmReyWxThABtE=\n\
+ ";
+ 
+ /* Public key */
+-static const char * jbjPublicDSA = "
+-mQFCBDu6XHwRAwCTIHRgKeIlOFUIEZeJVYSrXn0eUrM5S8OF471tTc+IV7AwiXBR
+-zCFCan4lO1ipmoAipyN2A6ZX0HWOcWdYlWz2adxA7l8JNiZTzkemA562xwex2wLy
+-AQWVTtRN6jv0LccAoN4UWZkIvkT6tV918sEvDEggGARxAv9190RhrDq/GMqd+AHm
+-qWrRkrBRHDUBBL2fYEuU3gFekYrW5CDIN6s3Mcq/yUsvwHl7bwmoqbf2qabbyfnv
+-Y66ETOPKLcw67ggcptHXHcwlvpfJmHKpjK+ByzgauPXXbRAC+gKDjzXL0kAQxjmT
+-2D+16O4vI8Emlx2JVcGLlq/aWhspvQWIzN6PytA3iKZ6uzesrM7yXmqzgodZUsJh
+-1wwl/0K5OIJn/oD41UayU8RXNER8SzDYvDYsJymFRwE1s58lL7QpSmVmZiBKb2hu
+-c29uIChBUlMgTjNOUFEpIDxqYmpAcmVkaGF0LmNvbT6IVwQTEQIAFwUCO7pcfAUL
+-BwoDBAMVAwIDFgIBAheAAAoJEIHSpVbYjoOZBToAn3TXaAI+bhg51EeyaiFip/6W
+-OVwBAJ44rTtNsgZBQxXISjB64CWxl4VaWQ==
++static const char * jbjPublicDSA = "\n\
++mQFCBDu6XHwRAwCTIHRgKeIlOFUIEZeJVYSrXn0eUrM5S8OF471tTc+IV7AwiXBR\n\
++zCFCan4lO1ipmoAipyN2A6ZX0HWOcWdYlWz2adxA7l8JNiZTzkemA562xwex2wLy\n\
++AQWVTtRN6jv0LccAoN4UWZkIvkT6tV918sEvDEggGARxAv9190RhrDq/GMqd+AHm\n\
++qWrRkrBRHDUBBL2fYEuU3gFekYrW5CDIN6s3Mcq/yUsvwHl7bwmoqbf2qabbyfnv\n\
++Y66ETOPKLcw67ggcptHXHcwlvpfJmHKpjK+ByzgauPXXbRAC+gKDjzXL0kAQxjmT\n\
++2D+16O4vI8Emlx2JVcGLlq/aWhspvQWIzN6PytA3iKZ6uzesrM7yXmqzgodZUsJh\n\
++1wwl/0K5OIJn/oD41UayU8RXNER8SzDYvDYsJymFRwE1s58lL7QpSmVmZiBKb2hu\n\
++c29uIChBUlMgTjNOUFEpIDxqYmpAcmVkaGF0LmNvbT6IVwQTEQIAFwUCO7pcfAUL\n\
++BwoDBAMVAwIDFgIBAheAAAoJEIHSpVbYjoOZBToAn3TXaAI+bhg51EeyaiFip/6W\n\
++OVwBAJ44rTtNsgZBQxXISjB64CWxl4VaWQ==\n\
+ ";
+ 
+ /* Signature */
+-static const char * abcSignatureDSA = "
+-iD8DBQA7vII+gdKlVtiOg5kRAvg4AJ0fV3gDBADobAnK2HOkV88bfmFMEgCeNysO
+-nP3dWWJnp0Pnbor7pIob4Dk=
++static const char * abcSignatureDSA = "\n\
++iD8DBQA7vII+gdKlVtiOg5kRAvg4AJ0fV3gDBADobAnK2HOkV88bfmFMEgCeNysO\n\
++nP3dWWJnp0Pnbor7pIob4Dk=\n\
+ ";
+ 
+ int
+@@ -108,28 +96,6 @@ main (int argc, char *argv[])
+ 
+     dig = pgpNewDig();
+ 
+-    mpbzero(&dig->p);	mpbsethex(&dig->p, fips_p);
+-    mpbzero(&dig->q);	mpbsethex(&dig->q, fips_q);
+-    mpnzero(&dig->g);	mpnsethex(&dig->g, fips_g);
+-    mpnzero(&dig->y);	mpnsethex(&dig->y, fips_y);
+-    mpnzero(&dig->r);	mpnsethex(&dig->r, fips_r);
+-    mpnzero(&dig->s);	mpnsethex(&dig->s, fips_s);
+-    mpnzero(&dig->hm);	mpnsethex(&dig->hm, fips_hm);
+-
+-    rc = dsavrfy(&dig->p, &dig->q, &dig->g, &dig->hm,
+-		&dig->y, &dig->r, &dig->s);
+-
+-fprintf(stderr, "=============================== DSA FIPS-186-1: rc %d\n", rc);
+-
+-    mpbfree(&dig->p);
+-    mpbfree(&dig->q);
+-    mpnfree(&dig->g);
+-    mpnfree(&dig->y);
+-
+-    mpnfree(&dig->hm);
+-    mpnfree(&dig->r);
+-    mpnfree(&dig->s);
+-
+ fprintf(stderr, "=============================== GPG Secret Key\n");
+     if ((rc = doit(jbjSecretDSA, dig, printing)) != 0)
+ 	fprintf(stderr, "==> FAILED: rc %d\n", rc);
+@@ -144,39 +110,33 @@ fprintf(stderr, "=============================== GPG Signature of \"abc\"\n");
+ 
+     {	DIGEST_CTX ctx = rpmDigestInit(PGPHASHALGO_SHA1, RPMDIGEST_NONE);
+ 	struct pgpDigParams_s * dsig = &dig->signature;
+-	const char * digest = NULL;
++	void *digest = NULL;
+ 	size_t digestlen = 0;
+ 	const char * txt = "abc";
++	SECItem digitem;
+ 	
+ 	rpmDigestUpdate(ctx, txt, strlen(txt));
+ 	rpmDigestUpdate(ctx, dsig->hash, dsig->hashlen);
+-	rpmDigestFinal(ctx, (void **)&digest, &digestlen, 1);
++	rpmDigestFinal(ctx, &digest, &digestlen, 0);
+ 
+-	mpnzero(&dig->hm); mpnsethex(&dig->hm, digest);
++fprintf(stderr, "\n    hm = [ 160]: %s\n\n", pgpHexStr(digest, digestlen));
++	digitem.type = siBuffer;
++	digitem.data = digest;
++	digitem.len = digestlen;
+ 
+-fprintf(stderr, "\n    hm = [ 160]: %s\n\n", digest);
++	rc = VFY_VerifyDigest(&digitem, dig->dsa, dig->dsasig, SEC_OID_ANSIX9_DSA_SIGNATURE_WITH_SHA1_DIGEST, NULL);
+ 
+ 	if (digest) {
+-	    free((void *)digest);
++	    free(digest);
+ 	    digest = NULL;
+ 	}
+     }
+ 
+-    rc = dsavrfy(&dig->p, &dig->q, &dig->g, &dig->hm,
+-		&dig->y, &dig->r, &dig->s);
+ 
+ fprintf(stderr, "=============================== DSA verify: rc %d\n", rc);
+ 
+-    mpbfree(&dig->p);
+-    mpbfree(&dig->q);
+-    mpnfree(&dig->g);
+-    mpnfree(&dig->y);
+-
+-    mpnfree(&dig->hm);
+-    mpnfree(&dig->r);
+-    mpnfree(&dig->s);
+-
+     dig = pgpFreeDig(dig);
+ 
+     return rc;
+ }
++
+diff --git a/tools/Makefile.am b/tools/Makefile.am
+index 72bfd0b..053a02a 100644
+--- a/tools/Makefile.am
++++ b/tools/Makefile.am
+@@ -8,7 +8,7 @@ INCLUDES = -I. \
+ 	-I$(top_srcdir)/lib \
+ 	-I$(top_srcdir)/rpmdb \
+ 	-I$(top_srcdir)/rpmio \
+-	@WITH_BEECRYPT_INCLUDE@ \
++	@WITH_NSS_INCLUDE@ \
+ 	@WITH_POPT_INCLUDE@ \
+ 	@WITH_LIBELF_INCLUDE@ \
+ 	@WITH_LIBDWARF_INCLUDE@ \
+@@ -36,10 +36,10 @@ bin_PROGRAMS =	rpmgraph
+ convertdb1_SOURCES =	convertdb1.c
+ 
+ debugedit_SOURCES =	debugedit.c hashtab.c
+-#debugedit_LDADD =	@LDFLAGS_STATIC@ \
+-debugedit_LDADD =	\
++debugedit_CFLAGS = 	$(INCLUDES)
++#debugedit_LDFLAGS =	$(staticLDFLAGS)
++debugedit_LDADD =	$(top_builddir)/rpmio/librpmio.la \
+ 	@WITH_LIBELF_LIB@ \
+-	@WITH_BEECRYPT_LIB@ \
+ 	@WITH_POPT_LIB@
+ 
+ javadeps_SOURCES =	javadeps.c
+diff --git a/tools/debugedit.c b/tools/debugedit.c
+index f6e27b6..e69ff3d 100644
+--- a/tools/debugedit.c
++++ b/tools/debugedit.c
+@@ -36,8 +36,8 @@
+ #include <gelf.h>
+ #include <dwarf.h>
+ 
+-#include <beecrypt/beecrypt.h>
+-
++#include <rpmio.h>
++#include <rpmpgp.h>
+ #include "hashtab.h"
+ 
+ #define DW_TAG_partial_unit 0x3c
+@@ -1304,22 +1304,29 @@ error_out:
+   return NULL;
+ }
+ 
++static const pgpHashAlgo algorithms[] = { PGPHASHALGO_MD5,
++  PGPHASHALGO_SHA1, PGPHASHALGO_SHA256, PGPHASHALGO_SHA384, PGPHASHALGO_SHA512 };
++
+ /* Compute a fresh build ID bit-string from the editted file contents.  */
+ static void
+ handle_build_id (DSO *dso, Elf_Data *build_id,
+ 		 size_t build_id_offset, size_t build_id_size)
+ {
+-  hashFunctionContext ctx;
+-  const hashFunction *hf = NULL;
+-  int i = hashFunctionCount ();
++  DIGEST_CTX ctx;
++  pgpHashAlgo algorithm;
++  int i = sizeof(algorithms)/sizeof(algorithms[0]);
++  void *digest = NULL;
++  size_t len;
++
++  rpmInitCrypto();
+ 
+   while (i-- > 0)
+     {
+-      hf = hashFunctionGet (i);
+-      if (hf != NULL && hf->digestsize == build_id_size)
++      algorithm = algorithms[i];
++      if (rpmDigestLength(algorithm) == build_id_size)
+ 	break;
+     }
+-  if (hf == NULL)
++  if (i < 0)
+     {
+       fprintf (stderr, "Cannot handle %Zu-byte build ID\n", build_id_size);
+       exit (1);
+@@ -1335,7 +1342,7 @@ handle_build_id (DSO *dso, Elf_Data *build_id,
+   /* Clear the old bits so they do not affect the new hash.  */
+   memset ((char *) build_id->d_buf + build_id_offset, 0, build_id_size);
+ 
+-  hashFunctionContextInit (&ctx, hf);
++  ctx = rpmDigestInit(algorithm, 0);
+ 
+   /* Slurp the relevant header bits and section contents and feed them
+      into the hash function.  The only bits we ignore are the offset
+@@ -1346,13 +1353,6 @@ handle_build_id (DSO *dso, Elf_Data *build_id,
+      or Elf64 object, only that we are consistent in what bits feed the
+      hash so it comes out the same for the same file contents.  */
+   {
+-    inline void process (const void *data, size_t size);
+-    inline void process (const void *data, size_t size)
+-    {
+-      memchunk chunk = { .data = (void *) data, .size = size };
+-      hashFunctionContextUpdateMC (&ctx, &chunk);
+-    }
+-
+     union
+     {
+       GElf_Ehdr ehdr;
+@@ -1381,7 +1381,7 @@ handle_build_id (DSO *dso, Elf_Data *build_id,
+ 	  goto bad;
+ 	if (elf64_xlatetom (&x, &x, dso->ehdr.e_ident[EI_DATA]) == NULL)
+ 	  goto bad;
+-	process (x.d_buf, x.d_size);
++	rpmDigestUpdate(ctx, x.d_buf, x.d_size);
+       }
+ 
+     x.d_type = ELF_T_SHDR;
+@@ -1393,34 +1393,29 @@ handle_build_id (DSO *dso, Elf_Data *build_id,
+ 	  u.shdr.sh_offset = 0;
+ 	  if (elf64_xlatetom (&x, &x, dso->ehdr.e_ident[EI_DATA]) == NULL)
+ 	    goto bad;
+-	  process (x.d_buf, x.d_size);
++	  rpmDigestUpdate(ctx, x.d_buf, x.d_size);
+ 
+ 	  if (u.shdr.sh_type != SHT_NOBITS)
+ 	    {
+ 	      Elf_Data *d = elf_rawdata (dso->scn[i], NULL);
+ 	      if (d == NULL)
+ 		goto bad;
+-	      process (d->d_buf, d->d_size);
++	      rpmDigestUpdate(ctx, d->d_buf, d->d_size);
+ 	    }
+ 	}
+   }
+ 
+-  hashFunctionContextDigest (&ctx, (byte *) build_id->d_buf + build_id_offset);
+-  hashFunctionContextFree (&ctx);
++  rpmDigestFinal(ctx, &digest, &len, 0);
++  memcpy((unsigned char *)build_id->d_buf + build_id_offset, digest, build_id_size);
++  free(digest);
+ 
+   elf_flagdata (build_id, ELF_C_SET, ELF_F_DIRTY);
+ 
+   /* Now format the build ID bits in hex to print out.  */
+   {
+-    const unsigned char * id = build_id->d_buf + build_id_offset;
++    const byte * id = (byte *)build_id->d_buf + build_id_offset;
+     char hex[build_id_size * 2 + 1];
+-    int n = snprintf (hex, 3, "%02" PRIx8, id[0]);
+-    assert (n == 2);
+-    for (i = 1; i < build_id_size; ++i)
+-      {
+-	n = snprintf (&hex[i * 2], 3, "%02" PRIx8, id[i]);
+-	assert (n == 2);
+-      }
++    pgpHexCvt(hex, id, build_id_size);
+     puts (hex);
+   }
+ }
