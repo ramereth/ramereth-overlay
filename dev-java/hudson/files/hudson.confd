@@ -1,0 +1,6 @@
+# /etc/conf.d/hudson
+
+export HUDSON_HOME="/usr/share/hudson/homedir"
+
+# Default options 
+HUDSON_OPTS="--logfile=/var/log/hudson/hudson.log --webroot=/usr/share/hudson/webroot"

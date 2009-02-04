@@ -1,0 +1,4 @@
+#!/bin/bash
+cd /usr/share/hudson
+trap 'kill -s HUP 0' 0
+/usr/bin/java -jar webapps/hudson.war ${@}
