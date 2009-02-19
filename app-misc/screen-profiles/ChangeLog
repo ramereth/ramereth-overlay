@@ -1,0 +1,10 @@
+# ChangeLog for app-misc/screen-profiles
+# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
+# $Header: $
+
+*screen-profiles-1.25 (19 Feb 2009)
+
+  19 Feb 2009; Lance Albertson <ramereth@gentoo.org>
+  +screen-profiles-1.25.ebuild:
+  Initial ebuild
+
