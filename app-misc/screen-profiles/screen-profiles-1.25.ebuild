@@ -12,16 +12,28 @@ KEYWORDS="x86"
 IUSE=""
 
 DEPEND=""
-RDEPEND="app-misc/screen"
+RDEPEND="app-misc/screen
+	sys-devel/gettext
+	>=dev-libs/newt-0.52.8"
+
+src_unpack() {
+	unpack ${A}
+	cd "${S}"
+	sed -i -e 's/screen.real/screen/g' screen
+	sed -i -e 's/usr\/share\/doc\/screen-profiles/usr\/share\/screen-profiles\/doc/g' screen-profiles
+}
 
 src_install() {
 	newbin screen screen-p
 	dobin select-screen-profile screen-profiles screen-launcher motd+shell
 	insinto /usr/share/${PN}
-	for i in bin profiles keybindings windows ; do
+	for i in profiles keybindings windows doc ; do
 		doins -r ${i}
 	done
-	doins screen-launcher-*
+	exeinto /usr/share/${PN}
+	doexe screen-launcher-*
+	exeinto /usr/share/${PN}/bin
+	doexe bin/*
 	doman *.1
-	dodoc  README doc/help.txt
+	dodoc  README
 }
