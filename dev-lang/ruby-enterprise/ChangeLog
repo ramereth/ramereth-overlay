@@ -2,6 +2,18 @@
 # Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
 # $Header: $
 
+  25 Feb 2009; Lance Albertson <ramereth@gentoo.org>
+  ruby-enterprise-1.8.6.20090201.ebuild:
+  * Refactored compiling with the tcmalloc library * Add nasty temp hack to
+  get around gem installs on Gentoo
+
+  23 Feb 2009; Lance Albertson <ramereth@gentoo.org>
+  +files/ruby-enterprise-1.8.6-20090201-libdir.patch,
+  +files/ruby-enterprise-1.8.6-20090201-mkconfig.patch,
+  ruby-enterprise-1.8.6.20090201.ebuild:
+  Change ebuild to use "ee" suffix so that it installs along side ruby
+  proper sanely
+
 *ruby-enterprise-1.8.6.20090201 (18 Feb 2009)
 
   18 Feb 2009; Lance Albertson <ramereth@gentoo.org>

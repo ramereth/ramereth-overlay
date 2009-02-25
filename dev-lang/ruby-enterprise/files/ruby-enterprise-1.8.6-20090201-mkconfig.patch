@@ -1,0 +1,12 @@
+diff -ru a/mkconfig.rb b/mkconfig.rb
+--- a/mkconfig.rb	2008-12-10 23:06:54.000000000 +0100
++++ b/mkconfig.rb	2008-12-10 23:07:41.000000000 +0100
+@@ -139,7 +139,7 @@
+ print(*v_others)
+ print <<EOS
+   CONFIG["ruby_version"] = "$(MAJOR).$(MINOR)"
+-  CONFIG["rubylibdir"] = "$(libdir)/ruby/$(ruby_version)"
++  CONFIG["rubylibdir"] = "$(libdir)/rubyee/$(ruby_version)"
+   CONFIG["archdir"] = "$(rubylibdir)/$(arch)"
+   CONFIG["sitelibdir"] = "$(sitedir)/$(ruby_version)"
+   CONFIG["sitearchdir"] = "$(sitelibdir)/$(sitearch)"
