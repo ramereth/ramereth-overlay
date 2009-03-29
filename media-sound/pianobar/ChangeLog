@@ -1,0 +1,11 @@
+# ChangeLog for media-sound/pianobar
+# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
+# $Header: $
+
+*pianobar-9999 (29 Mar 2009)
+
+  29 Mar 2009; Lance Albertson <ramereth@gentoo.org> +pianobar-9999.ebuild:
+  Initial ebuild
+
+  Thanks to Ben Kero (bkero@osuosl.org) for submitting it
+
