@@ -1,0 +1,10 @@
+# ChangeLog for sys-kernel/kernel-eeepc
+# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
+# $Header: $
+
+*kernel-eeepc-2.6.29 (29 Mar 2009)
+
+  29 Mar 2009; Lance Albertson <ramereth@gentoo.org>
+  +kernel-eeepc-2.6.29.ebuild:
+  Version bump, updated ebuild as well
+
