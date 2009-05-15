@@ -1,0 +1,15 @@
+[general]
+instances = samba
+
+[samba]
+dbuser = mb
+dbpass = 12345
+dbdriver = postgresql
+dbhost = your_host.example.com
+# optional: dbport = ...
+dbname = mb_samba
+
+[mirrorprobe]
+logfile = /var/log/mirrorprobe.log
+loglevel = INFO
+mailto = your_mail@example.com, another_mail@example.com
