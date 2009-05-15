@@ -5,6 +5,7 @@
 inherit apache-module
 
 MY_P="${PN}_${PV}"
+MY_PN="${PN/2}"
 
 DESCRIPTION="Apache 2.x module for finding the country and city
 that a web request originated from"
@@ -23,8 +24,8 @@ S="${WORKDIR}/${MY_P}"
 
 # See apache-module.eclass for more information.
 APACHE2_MOD_CONF="30_${PN}"
-APACHE2_MOD_FILE=".libs/mod_geoip.so"
-APXS2_ARGS="-c mod_geoip.c"
-DOCFILES="INSTALL README Changes"
+APACHE2_MOD_FILE="${S}/.libs/${MY_PN}.so"
+APXS2_ARGS="-c ${MY_PN}.c"
+DOCFILES="INSTALL README README.php Changes"
 
 need_apache2
