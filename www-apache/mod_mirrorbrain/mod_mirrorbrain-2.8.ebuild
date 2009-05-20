@@ -34,7 +34,7 @@ APACHE2_MOD_DEFINE="MIRRORBRAIN"
 
 if use memcache ; then
 	APXS2_ARGS="-DWITH_MEMCACHE -c ${PN}.c"
-else 
+else
 	APXS2_ARGS="-c ${PN}.c"
 fi
 
