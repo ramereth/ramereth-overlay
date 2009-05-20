@@ -2,6 +2,11 @@
 # Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
 # $Header: $
 
+  20 May 2009; Lance Albertson <ramereth@gentoo.org>
+  mod_mirrorbrain-2.8.ebuild:
+  * Change apache useflag to the USE EXPAND
+  * Add PDEPEND with mirrorbrain to reduce confusion
+
   15 May 2009; Lance Albertson <ramereth@gentoo.org> ChangeLog:
   New ebuild for mirrorbrain
 

@@ -21,9 +21,10 @@ SLOT="0"
 # require postgres for now, may get mysql support later from upstream
 DEPEND="www-apache/mod_form
 	dev-libs/apr-util[postgres]
-	www-servers/apache[dbd]
+	www-servers/apache[apache2_modules_dbd]
 	memcache? ( www-apache/mod_memcache )"
 RDEPEND="${DEPEND}"
+PDEPEND="=www-misc/mirrorbrain-${PV}"
 
 S="${WORKDIR}/${MY_P}/${PN}"
 
