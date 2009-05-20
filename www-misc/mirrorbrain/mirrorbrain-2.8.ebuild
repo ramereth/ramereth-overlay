@@ -19,11 +19,11 @@ IUSE=""
 SLOT="0"
 
 DEPEND="dev-libs/geoip
-	www-apache/mod_autoindex_mb
-	www-apache/mod_mirrorbrain
+	=www-apache/mod_autoindex_mb-${PV}
+	=www-apache/mod_mirrorbrain-${PV}
 	www-apache/mod_form
-	dev-python/psycopg 
-	dev-perl/DBD-Pg 
+	dev-python/psycopg
+	dev-perl/DBD-Pg
 	dev-python/sqlobject
 	dev-perl/Config-IniFiles
 	dev-perl/Digest-MD4
@@ -48,34 +48,25 @@ src_compile() {
 }
 
 src_install() {
-	exeinto /usr/libexec/mirrorbrain
-	local tools="geoip-lite-update rsyncusers geoiplookup_city
-		geoiplookup_continent"
-	for i in ${tools} ; do
-		doexe tools/${i}
-	done
-	newexe tools/metalink-hasher.py metalink-hasher
-	newexe tools/rsyncinfo.py rsyncinfo
-	newexe tools/scanner.pl scanner
-	newexe mirrorprobe/mirrorprobe.py mirrorprobe
-	insinto /etc
-	doins ${FILESDIR}/mirrorbrain.conf.dist
-	fperms 0640 /etc/mirrorbrain.conf.dist
-	fowners root:mirrorbrain /etc/mirrorbrain.conf.dist
+	# install docs
+	dodoc ABOUT BUGS FAQ INSTALL NEWS TODO THANKS
 
+	# install misc files/scripts
+	newbin mirrorprobe/mirrorprobe.py mirrorprobe
+	insinto /usr/share/"${PN}"
+	doins -r sql
+	doins -r tools
+	rm "${D}"/usr/share/"${PN}"/tools/*.c
 	# install mirrordoctor
-	insinto /usr/share/mirrorbrain
 	cd mirrordoctor
 	distutils_src_install
 	doins -r famfamfam_flag_icons
-	mv "${D}"/usr/bin/mirrordoctor.py "${D}"/usr/libexec/mirrorbrain/
-	dosym /usr/libexec/mirrorbrain/mirrordoctor.py /usr/bin/mb
-	dosym /usr/libexec/mirrorbrain/mirrordoctor.py /usr/bin/mirrordoctor
-	dosym /usr/libexec/mirrorbrain/mirrorprobe /usr/bin/mirrorprobe
+	mv "${D}"/usr/bin/mirrordoctor.py "${D}"/usr/bin/mirrordoctor
+	dosym /usr/bin/mirrordoctor /usr/bin/mb
 
-	# install docs
-	cd "${S}"
-	insinto /usr/share/doc/${P}
-	doins -r sql
-	dodoc ABOUT BUGS FAQ INSTALL NEWS TODO THANKS
+	# config files
+	insinto /etc
+	doins "${FILESDIR}"/mirrorbrain.conf.dist
+	fperms 0640 /etc/mirrorbrain.conf.dist
+	fowners root:mirrorbrain /etc/mirrorbrain.conf.dist
 }
