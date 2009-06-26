@@ -15,8 +15,11 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE=""
 
-DEPEND=">=virtual/postgresql-base-8.2"
-RDEPEND=""
+DEPEND="|| ( 
+		>=dev-db/postgresql-8.2
+		>=virtual/postgresql-server-8.2
+	)"
+RDEPEND="${DEPEND}"
 
 src_compile() {
 	emake USE_PGXS=1 || die
