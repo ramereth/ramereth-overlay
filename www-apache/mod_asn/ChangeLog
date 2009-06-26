@@ -1,0 +1,7 @@
+# ChangeLog for www-apache/mod_asn
+# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
+# $Header: $
+
+  26 Jun 2009; Lance Albertson <ramereth@gentoo.org> ChangeLog:
+  New ebuild
+
