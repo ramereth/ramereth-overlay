@@ -3,6 +3,9 @@
 # $Header: $
 
   30 Jun 2009; Lance Albertson <ramereth@gentoo.org> ChangeLog:
+  Import changes from mainline tree, fix several issues
+
+  30 Jun 2009; Lance Albertson <ramereth@gentoo.org> ChangeLog:
   Version bump
    * Remove old patches as they are no longer needed
 

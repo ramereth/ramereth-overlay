@@ -27,6 +27,15 @@ PDEPEND="server? ( dev-ruby/builder )" # index_gem_repository.rb
 
 USE_RUBY="ruby18"
 
+src_unpack() {
+	unpack ${A}
+	cd "${S}"
+	epatch "${FILESDIR}/${P}-setup.patch"
+	# Fixes a new "feature" that would prevent us from recognizing installed
+	# gems inside the sandbox
+	epatch "${FILESDIR}/${P}-gentoo.patch"
+}
+
 src_compile() {
 	# Allowing ruby_src_compile would be bad with the new setup.rb
 	:
@@ -55,9 +64,8 @@ src_install() {
 		myconf="${myconf} --no-rdoc"
 	fi
 
-	${RUBY} setup.rb $myconf --prefix="${D}" || die "setup.rb install failed"
+	${RUBY} setup.rb $myconf --destdir="${D}" || die "setup.rb install failed"
 
-	dosym gemee /usr/bin/gem || die "dosym gem failed"
 	dodoc README ChangeLog || die "dodoc README failed"
 
 	cp "${FILESDIR}/auto_gem.rb" "${D}"/$(${RUBY} -r rbconfig -e 'print Config::CONFIG["sitedir"]') || die "cp auto_gem.rb failed"
@@ -76,6 +84,10 @@ pkg_postinst()
 	SOURCE_CACHE="/usr/$(get_libdir)/rubyee/gems/$ver/source_cache"
 	if [[ -e "${SOURCE_CACHE}" ]]; then
 		rm "${SOURCE_CACHE}"
+	fi
+
+	if [[ ! -n $(readlink "${ROOT}"usr/bin/gem) ]] ; then
+		eselect ruby set rubyee
 	fi
 
 	ewarn
