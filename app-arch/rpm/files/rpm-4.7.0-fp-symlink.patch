@@ -1,0 +1,26 @@
+commit 1b9e6d7f48a68fd677c70d04c9a6bb4274cf7b9f
+Author: Florian Festi <ffesti@redhat.com>
+Date:   Tue Jun 16 17:37:40 2009 +0200
+
+    Fix Segfault for to be installed symlinks pointing to existing locations
+    fixes rhbz#505777
+
+diff --git a/lib/fprint.c b/lib/fprint.c
+index d32eec1..e57ba20 100644
+--- a/lib/fprint.c
++++ b/lib/fprint.c
+@@ -311,10 +311,10 @@ void fpLookupSubdir(rpmFpHash symlinks, rpmFpHash fphash, fingerPrintCache fpc,
+ 		   /* setup current_fp for the new path */
+ 		   found = 1;
+ 		   current_fp = *fp;
+-		   if (!fp->subDir) {
+-		     lensubDir = 0;
+-		     currentsubdir = endsubdir = NULL;
+-		     break;
++		   if (fp->subDir == NULL) {
++		     /* directory exists - no need to look for symlinks */
++		     rpmFpHashAddEntry(fphash, fp, ffi);
++		     return;
+ 		   }
+ 		   lensubDir = strlen(fp->subDir);
+ 		   currentsubdir = xstrdup(fp->subDir);

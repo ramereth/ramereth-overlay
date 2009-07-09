@@ -1,0 +1,13 @@
+diff --git a/macros.in b/macros.in
+index 830072a..bdce7f4 100644
+--- a/macros.in
++++ b/macros.in
+@@ -805,6 +805,8 @@ print (t)\
+   export RPM_BUILD_ROOT}\
+   %{?_javaclasspath:CLASSPATH=\"%{_javaclasspath}\"\
+   export CLASSPATH}\
++  PKG_CONFIG_PATH=\"%{_libdir}/pkgconfig:%{_datadir}/pkgconfig\"\
++  export PKG_CONFIG_PATH\
+   \
+   %{verbose:set -x}%{!verbose:exec > /dev/null}\
+   umask 022\

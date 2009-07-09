@@ -1,0 +1,16 @@
+diff --git a/build/rpmfc.c b/build/rpmfc.c
+index 94fb68e..525915b 100644
+--- a/build/rpmfc.c
++++ b/build/rpmfc.c
+@@ -1093,6 +1093,11 @@ assert(s != NULL);
+ 	free(buf);
+     }
+ 
++    /* Add possible GStreamer provides */
++    if (!fc->skipProv && isDSO) {
++	xx = rpmfcHelper(fc, 'P', "gstreamer");
++    }
++
+ exit:
+     soname = _free(soname);
+     if (elf) (void) elf_end(elf);

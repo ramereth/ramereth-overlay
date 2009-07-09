@@ -1,0 +1,96 @@
+diff --git a/lib/tagexts.c b/lib/tagexts.c
+index 501d8ac..cf71639 100644
+--- a/lib/tagexts.c
++++ b/lib/tagexts.c
+@@ -460,12 +460,6 @@ static int filerequireTag(Header h, rpmtd td)
+ }
+ 
+ /* I18N look aside diversions */
+-
+-#if defined(ENABLE_NLS)
+-extern int _nl_msg_cat_cntr;	/* XXX GNU gettext voodoo */
+-#endif
+-static const char * const language = "LANGUAGE";
+-
+ static const char * const _macro_i18ndomains = "%{?_i18ndomains}";
+ 
+ /**
+@@ -477,63 +471,27 @@ static const char * const _macro_i18ndomains = "%{?_i18ndomains}";
+  */
+ static int i18nTag(Header h, rpmTag tag, rpmtd td)
+ {
+-    char * dstring = rpmExpand(_macro_i18ndomains, NULL);
+-    int rc;
++    int rc = headerGet(h, tag, td, HEADERGET_ALLOC);
++    if (rc) {
++    	char *de, *dstring = rpmExpand(_macro_i18ndomains, NULL);
++	const char *domain;
+ 
+-    td->type = RPM_STRING_TYPE;
+-    td->data = NULL;
+-    td->count = 0;
+-
+-    if (dstring && *dstring) {
+-	char *domain, *de;
+-	const char * langval;
+-	char * msgkey;
+-	const char * msgid;
+-	const char * n;
+-	int xx;
+-
+-	xx = headerNVR(h, &n, NULL, NULL);
+-	rasprintf(&msgkey, "%s(%s)", n, rpmTagGetName(tag));
+-
+-	/* change to en_US for msgkey -> msgid resolution */
+-	langval = getenv(language);
+-	(void) setenv(language, "en_US", 1);
+-#if defined(ENABLE_NLS)
+-        ++_nl_msg_cat_cntr;
+-#endif
+-
+-	msgid = NULL;
+ 	for (domain = dstring; domain != NULL; domain = de) {
++	    const char *msgid = td->data;
++	    const char *msg = NULL;
++
+ 	    de = strchr(domain, ':');
+ 	    if (de) *de++ = '\0';
+-	    msgid = dgettext(domain, msgkey);
+-	    if (msgid != msgkey) break;
+-	}
+-
+-	/* restore previous environment for msgid -> msgstr resolution */
+-	if (langval)
+-	    (void) setenv(language, langval, 1);
+-	else
+-	    unsetenv(language);
+-#if defined(ENABLE_NLS)
+-        ++_nl_msg_cat_cntr;
+-#endif
+-
+-	if (domain && msgid) {
+-	    td->data = dgettext(domain, msgid);
+-	    td->data = xstrdup(td->data); /* XXX xstrdup has side effects. */
+-	    td->count = 1;
+-	    td->flags = RPMTD_ALLOCED;
++	    msg = dgettext(domain, td->data);
++	    if (msg != msgid) {
++		free(td->data);
++		td->data = xstrdup(msg);
++		break;
++	    }
+ 	}
+-	dstring = _free(dstring);
+-	free(msgkey);
+-	if (td->data)
+-	    return 1;
++	free(dstring);
+     }
+-
+-    dstring = _free(dstring);
+-
+-    rc = headerGet(h, tag, td, HEADERGET_DEFAULT);
++	
+     return rc;
+ }
+ 
