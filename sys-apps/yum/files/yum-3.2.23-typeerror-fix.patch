@@ -1,0 +1,21 @@
+diff -ur yum-3.2.23.orig/yum/rpmsack.py yum-3.2.23/yum/rpmsack.py
+--- yum-3.2.23.orig/yum/rpmsack.py	2009-07-09 03:34:31.000000000 -0700
++++ yum-3.2.23/yum/rpmsack.py	2009-07-09 03:37:37.000000000 -0700
+@@ -174,7 +174,7 @@
+         # check provides
+         tag = self.DEP_TABLE['provides'][0]
+         mi = ts.dbMatch()
+-        mi.pattern(tag, rpm.RPMMIRE_GLOB, name)
++        mi.pattern(tag, rpm.RPMMIRE_GLOB, name.encode('us-ascii'))
+         for hdr in mi:
+             pkg = self._makePackageObject(hdr, mi.instance())
+             if not result.has_key(pkg.pkgid):
+@@ -197,7 +197,7 @@
+         ts = self.readOnlyTS()
+         result = {}
+         
+-        mi = ts.dbMatch('basenames', name)
++        mi = ts.dbMatch('basenames', name.encode('us-ascii'))
+         for hdr in mi:
+             pkg = self._makePackageObject(hdr, mi.instance())
+             if not result.has_key(pkg.pkgid):
