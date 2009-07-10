@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <layman>
   <overlay name="ramereth" status="official" type="git"
-    src="git@github.com:ramereth/ramereth-overlay.git"
+    src="git://github.com/ramereth/ramereth-overlay.git"
     contact="ramereth@gentoo.org">
     <link>http://github.com/ramereth/ramereth-overlay/tree/master</link>
     <description>Ramereth developer overlay</description>
