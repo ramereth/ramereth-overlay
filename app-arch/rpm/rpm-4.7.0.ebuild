@@ -71,6 +71,7 @@ src_compile() {
 		--with-external-db \
 		$(use_with selinux) \
 		$(use_with python python ${PYVER}) \
+		$(use_enable python) \
 		$(use_with doc apidocs) \
 		$(use_enable nls) \
 		|| die "econf failed"
