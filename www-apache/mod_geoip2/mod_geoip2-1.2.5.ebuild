@@ -25,7 +25,7 @@ S="${WORKDIR}/${MY_P}"
 # See apache-module.eclass for more information.
 APACHE2_MOD_CONF="30_${PN}"
 APACHE2_MOD_FILE="${S}/.libs/${MY_PN}.so"
-APXS2_ARGS="-c ${MY_PN}.c"
+APXS2_ARGS="-l GeoIP -c ${MY_PN}.c"
 DOCFILES="INSTALL README README.php Changes"
 
 need_apache2
