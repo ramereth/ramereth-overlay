@@ -20,7 +20,7 @@ SRC_URI="http://ammo.osuosl.org/distfiles/kernel-${KV_NAME}-${KV_FULL}.${MYARCH}
 		http://ammo.osuosl.org/distfiles/modules-${KV_NAME}-${KV_FULL}.${MYARCH}.tbz2"
 
 LICENSE="GPL-2"
-KEYWORDS="amd64"
+KEYWORDS="x86"
 SLOT="${PVR}"
 IUSE="+source"
 
