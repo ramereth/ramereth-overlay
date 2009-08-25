@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<herd>ruby</herd>
+	<maintainer>
+		<email>ramereth@gentoo.org</email>
+		<name>Lance Albertson</name>
+	</maintainer>
+	<use>
+		<flag name='tcmalloc'>Install support for Googles tcmalloc library</flag>
+	</use>
+	<longdescription lang="en">
+	 Ruby Enterprise Edition is a branch of Ruby, which includes:
+	 * An enhanced garbage collector. This allows one to reduce memory usage
+	   of Ruby on Rails applications (or any Ruby application that takes
+	   advantage of the feature) by 33% on average.
+	 * An improved memory allocator. This increases Ruby's performance
+	   drastically.
+	 * Various developer tools for debugging memory usage and
+	   garbage collector behavior.
+	</longdescription>
+</pkgmetadata>

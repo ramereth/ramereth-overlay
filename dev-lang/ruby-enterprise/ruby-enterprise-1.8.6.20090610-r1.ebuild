@@ -2,12 +2,9 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-WANT_AUTOCONF="latest"
-WANT_AUTOMAKE="latest"
+EAPI="2"
 
 inherit versionator eutils flag-o-matic autotools
-
-EAPI="2"
 
 MY_PV=$(replace_version_separator 3 '-')
 S="${WORKDIR}/${PN}-${MY_PV}/source"
@@ -21,7 +18,7 @@ HOMEPAGE="http://www.rubyenterpriseedition.com/"
 SRC_URI="mirror://rubyforge/emm-ruby/${PN}-${MY_PV}.tar.gz"
 
 LICENSE="|| ( Ruby GPL-2 )"
-KEYWORDS="amd64 x86"
+KEYWORDS="~amd64 ~x86"
 IUSE="doc tcmalloc threads"
 
 DEPEND="
@@ -35,9 +32,7 @@ PDEPEND="dev-ruby/rubygems-ee"
 
 PROVIDE="virtual/ruby"
 
-src_unpack() {
-	unpack "${A}"
-	cd "${S}"
+src_prepare() {
 	epatch "${FILESDIR}/${PN}-${MY_PV}-libdir.patch"
 	epatch "${FILESDIR}/${PN}-${MY_PV}-mkconfig.patch"
 	if use tcmalloc ; then
@@ -88,14 +83,14 @@ pkg_postinst() {
 		eselect ruby set ruby${MY_SUFFIX}
 	fi
 
-	elog   
+	elog
 	elog "This ebuild is compatible to eselect-ruby"
 	elog "To switch between available Ruby profiles, execute as root:"
 	elog "\teselect ruby set ruby(ee|18|19|...)"
 	elog
 }
 
-pkg_postrm() { 
+pkg_postrm() {
 	if [[ ! -n $(readlink "${ROOT}"usr/bin/ruby) ]] ; then
 		eselect ruby set ruby${MY_SUFFIX}
 	fi
