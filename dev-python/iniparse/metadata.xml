@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<herd>python</herd>
+	<maintainer>
+		<email>ramereth@gentoo.org</email>
+		<name>Lance Albertson</name>
+	</maintainer>
+	<longdescription lang="en">
+	iniparse is a INI parser for Python which is:
+
+	* Compatiable with ConfigParser: Backward compatible implementations of
+	  ConfigParser, RawConfigParser, and SafeConfigParser are included that are
+	  API-compatible with the Python standard library. They pass all the unit
+	  tests in Python-2.4.4. 
+
+	* Preserves structure of INI files: Order of sections and options,
+	  indentation, comments, and blank lines are preserved as far as possible
+	  when data is updated. 
+
+	* More convenient: Values can be accessed using dotted notation
+	  (cfg.user.name), or using container syntax (cfg['user']['name']). 
+	</longdescription>
+</pkgmetadata>
+

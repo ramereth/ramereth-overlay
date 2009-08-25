@@ -1,0 +1,7 @@
+# ChangeLog for dev-python/iniparse
+# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
+# $Header: $
+
+  25 Aug 2009; Lance Albertson <ramereth@gentoo.org> +metadata.xml:
+  QA Fixes
+
