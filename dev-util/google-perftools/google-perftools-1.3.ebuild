@@ -1,4 +1,4 @@
-# Copyright 1999-2007 Gentoo Foundation
+# Copyright 1999-2009 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
@@ -13,11 +13,6 @@ IUSE=""
 
 DEPEND="sys-libs/libunwind"
 RDEPEND="${DEPEND}"
-
-src_compile() {
-	econf || die "econf failed"
-	emake -j1 || die "emake failed"
-}
 
 src_install() {
 	emake install DESTDIR="${D}" || die "emake install failed"
