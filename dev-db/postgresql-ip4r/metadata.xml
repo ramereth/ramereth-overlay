@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<herd></herd>
+	<maintainer>
+		<email>ramereth@gentoo.org</email>
+		<name>Lance Albertson</name>
+	</maintainer>
+	<longdescription lang="en">
+	ip4 and ip4r are types that contain a single IPv4 address and a range of
+	IPv4 addresses respectively. They can be used as a more flexible, indexable
+	version of the cidr type.
+	</longdescription>
+</pkgmetadata>
+

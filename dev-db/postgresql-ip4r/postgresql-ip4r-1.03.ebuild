@@ -15,7 +15,7 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE=""
 
-DEPEND="|| ( 
+DEPEND="|| (
 		>=dev-db/postgresql-8.2
 		>=virtual/postgresql-server-8.2
 	)"
