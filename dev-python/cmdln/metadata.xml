@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<herd></herd>
+	<maintainer>
+		<email>ramereth@gentoo.org</email>
+		<name>Lance Albertson</name>
+	</maintainer>
+	<longdescription lang="en">
+	cmdln.py is an extension of Python's default cmd.py module that provides "a
+	simple framework for writing line-oriented command interpreters". The idea
+	(with both cmd.py and cmdln.py) is to be able to quickly build
+	multi-sub-command tools (think cvs or svn) and/or simple interactive shells
+	(think gdb or pdb). cmdln.py's extensions make it more natural to write
+	sub-commands, integrate optparse for simple option processing, and make
+	having good command documentation easier. 
+	</longdescription>
+</pkgmetadata>
+
