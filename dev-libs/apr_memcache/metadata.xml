@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<herd></herd>
+	<maintainer>
+		<email>ramereth@gentoo.org</email>
+		<name>Lance Albertson</name>
+	</maintainer>
+	<longdescription lang="en">
+	apr_memcache is a client for memcached written in C, using APR and APR-Util.
+	It provides pooled client connections and is thread safe, making it perfect
+	for use inside Apache Modules.
+	</longdescription>
+</pkgmetadata>
+
