@@ -2,6 +2,10 @@
 # Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
 # $Header: $
 
+  25 Aug 2009; Lance Albertson <ramereth@gentoo.org> pianobar-9999.ebuild,
+  +metadata.xml:
+  QA Fixes
+
   20 Apr 2009; Lance Albertson <ramereth@gentoo.org> pianobar-9999.ebuild:
   Import ebuild from wendall911's overlay [1] and remove references to
   cmake-utils as it breaks the install

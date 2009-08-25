@@ -11,15 +11,15 @@ EGIT_REPO_URI="git://github.com/PromyLOPh/pianobar.git"
 
 LICENSE="as-is"
 SLOT="0"
-KEYWORDS="x86"
-IUSE="alsa esd network oss pulseaudio"
+KEYWORDS="~amd64 ~x86"
+IUSE="alsa esd pulseaudio"
 
 DEPEND="dev-util/cmake
-  media-libs/libao
-  net-misc/curl
-  media-libs/faad2
-  media-libs/libmad
-  dev-libs/libxml2"
+	media-libs/libao
+	net-misc/curl
+	media-libs/faad2
+	media-libs/libmad
+	dev-libs/libxml2"
 
 RDEPEND="alsa? ( media-libs/alsa-lib )
 	esd? ( media-sound/esound )
@@ -34,5 +34,5 @@ src_compile() {
 
 src_install() {
 	emake DESTDIR="${D}" install || die "emake install failed."
-	dodoc AUTHORS README COPYING
+	dodoc AUTHORS README
 }
