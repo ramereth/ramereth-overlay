@@ -2,6 +2,8 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
+EAPI=2
+
 inherit mount-boot
 
 MYARCH="x86"
@@ -20,15 +22,15 @@ SRC_URI="http://ammo.osuosl.org/distfiles/kernel-${KV_NAME}-${KV_FULL}.${MYARCH}
 		http://ammo.osuosl.org/distfiles/modules-${KV_NAME}-${KV_FULL}.${MYARCH}.tbz2"
 
 LICENSE="GPL-2"
-KEYWORDS="x86"
+KEYWORDS="~x86"
 SLOT="${PVR}"
 IUSE="+source"
 
 DEPEND=""
-RDEPEND="source? ( =sys-kernel/gentoo-sources-${PVR} )"
+RDEPEND="source? ( =sys-kernel/vanilla-sources-${PVR} )"
 
 src_unpack() {
-	cd ${WORKDIR}
+	cd "${WORKDIR}"
 	mkdir kernel modules
 	cd kernel
 	unpack kernel-${KV_NAME}-${KV_FULL}.${MYARCH}.tbz2
@@ -41,6 +43,6 @@ src_unpack() {
 
 src_install() {
 	dodir /boot
-	mv ${WORKDIR}/kernel/* ${D}/boot
-	mv ${WORKDIR}/modules/* ${D}/
+	mv "${WORKDIR}"/kernel/* "${D}"/boot
+	mv "${WORKDIR}"/modules/* "${D}"/
 }
