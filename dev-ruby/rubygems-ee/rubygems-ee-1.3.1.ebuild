@@ -1,4 +1,4 @@
-# Copyright 1999-2008 Gentoo Foundation
+# Copyright 1999-2009 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/dev-ruby/rubygems/rubygems-1.2.0.ebuild,v 1.4 2008/08/06 16:40:12 graaff Exp $
 
@@ -19,10 +19,11 @@ S="${WORKDIR}/${MY_P}"
 # change the filename on the end, it still downloads the same file.
 SRC_URI="mirror://rubyforge/${MY_PN}/${MY_P}.tgz"
 
-KEYWORDS="~alpha ~amd64 ~hppa ~ia64 ~mips ~ppc ~ppc64 ~sparc ~x86 ~x86-fbsd"
+KEYWORDS="~amd64 ~x86"
 SLOT="0"
 IUSE="doc server"
 DEPEND="=dev-lang/ruby-enterprise-1.8*"
+RDEPEND="${DEPEND}"
 PDEPEND="server? ( dev-ruby/builder )" # index_gem_repository.rb
 
 USE_RUBY="ruby18"
