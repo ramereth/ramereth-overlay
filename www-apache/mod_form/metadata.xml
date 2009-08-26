@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<herd>apache</herd>
+	<maintainer>
+		<email>ramereth@gentoo.org</email>
+		<name>Lance Albertson</name>
+	</maintainer>
+	<longdescription lang="en">
+	mod_form is a utility to decode data submitted from Web forms. It deals with
+	both GET and POST methods where the data are encoded using the default
+	content type application/x-www-form-urlencoded. It does not decode
+	multipart/form-data (file upload) forms.
+	</longdescription>
+</pkgmetadata>
+
