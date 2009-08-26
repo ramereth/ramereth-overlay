@@ -1,4 +1,4 @@
-# Copyright 1999-2008 Gentoo Foundation
+# Copyright 1999-2009 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/app-arch/rpm/rpm-4.4.6-r6.ebuild,v 1.1 2008/05/31 16:18:57 loki_val Exp $
 
@@ -59,7 +59,7 @@ src_unpack() {
 	# tell it where nss is at
 	append-ldflags "$(pkg-config --libs-only-L nss)"
 	append-cppflags "$(pkg-config --cflags-only-I nss)"
-	eautoreconf	
+	eautoreconf
 }
 
 src_compile() {
@@ -89,17 +89,17 @@ src_install() {
 
 	keepdir /usr/src/rpm/{SRPMS,SPECS,SOURCES,RPMS,BUILD}
 
-	dodoc CHANGES CREDITS GROUPS README* ChangeLog INSTALL ABOUT-NLS TODO
+	dodoc CHANGES CREDITS GROUPS README* ChangeLog INSTALL TODO
 
 }
 
 pkg_postinst() {
 	if [[ -f ${ROOT}/var/lib/rpm/Packages ]] ; then
 		einfo "RPM database found... Rebuilding database (may take a while)..."
-		"${ROOT}"/usr/bin/rpm --rebuilddb --root=${ROOT}
+		"${ROOT}"/usr/bin/rpm --rebuilddb --root="${ROOT}"
 	else
 		einfo "No RPM database found... Creating database..."
-		"${ROOT}"/usr/bin/rpm --initdb --root=${ROOT}
+		"${ROOT}"/usr/bin/rpm --initdb --root="${ROOT}"
 	fi
 
 	distutils_pkg_postinst

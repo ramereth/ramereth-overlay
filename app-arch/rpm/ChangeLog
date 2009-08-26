@@ -1,6 +1,24 @@
 # ChangeLog for app-arch/rpm
-# Copyright 1999-2008 Gentoo Foundation; Distributed under the GPL v2
+# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
 # $Header: /var/cvsroot/gentoo-x86/app-arch/rpm/ChangeLog,v 1.92 2008/07/23 21:26:25 cardoe Exp $
+
+  26 Aug 2009; Lance Albertson <ramereth@gentoo.org>
+  -files/rpm-4.4.2.1-no-popt.patch, -files/rpm-4.4.2.2-autofoo.patch,
+  -files/rpm-4.4.2.2-devel-autodep.patch,
+  -files/rpm-4.4.2.2-matchpathcon.patch,
+  -files/rpm-4.4.2.2-pkgconfig-path.patch, -rpm-4.4.2.3.ebuild,
+  -files/rpm-4.4.2.3-configure-db3-fix.patch,
+  -files/rpm-4.4.2.3-configure-lib64-fix.patch,
+  -files/rpm-4.4.2.3-configure-nss-fix.patch,
+  -files/rpm-4.4.2.3-fix-find-requires.patch,
+  -files/rpm-4.4.2.3-no-order-rescan-limit.patch,
+  -files/rpm-4.4.2.3-nss.patch, -files/rpm-4.4.2.3-prereq.patch,
+  -files/rpm-4.4.2.3-queryformat-arch.patch,
+  -files/rpm-4.4.2.3-rc1-sparc-mcpu.patch,
+  -files/rpm-4.4.2.3-selinux-fix.patch,
+  -files/rpm-4.4.2-ghost-conflicts.patch, -files/rpm-4.4.2-rpmfc-skip.patch,
+  -files/rpm-4.4.2-trust.patch, rpm-4.7.0.ebuild, metadata.xml:
+  QA fixes, remove old version
 
   23 Jul 2008; Doug Goldstein <cardoe@gentoo.org> metadata.xml:
   add GLEP 56 USE flag desc from use.local.desc
