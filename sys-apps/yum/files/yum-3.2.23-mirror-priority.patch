@@ -1,0 +1,11 @@
+--- yum/config.py~	2008-03-04 16:21:49.000000000 -0500
++++ yum/config.py	2008-03-04 16:21:49.000000000 -0500
+@@ -582,7 +582,7 @@
+ 
+     commands = ListOption()
+     exclude = ListOption()
+-    failovermethod = Option('roundrobin')
++    failovermethod = Option('priority')
+     proxy = UrlOption(schemes=('http', 'ftp', 'https'), allow_none=True)
+     proxy_username = Option()
+     proxy_password = Option()

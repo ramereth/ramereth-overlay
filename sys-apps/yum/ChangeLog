@@ -1,6 +1,16 @@
 # ChangeLog for sys-apps/yum
-# Copyright 1999-2008 Gentoo Foundation; Distributed under the GPL v2
+# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
 # $Header: /var/cvsroot/gentoo-x86/sys-apps/yum/ChangeLog,v 1.6 2008/05/29 18:04:58 hawking Exp $
+
+*yum-3.2.23-r1 (29 Aug 2009)
+
+  29 Aug 2009; Lance Albertson <ramereth@gentoo.org> -yum-2.6.1.ebuild,
+  yum-3.2.19.ebuild, yum-3.2.23.ebuild, +yum-3.2.23-r1.ebuild,
+  +files/yum-3.2.23-14-HEAD.patch.bz2,
+  +files/yum-3.2.23-mirror-priority.patch,
+  +files/yum-3.2.23-multilib-policy-best.patch,
+  +files/yum-3.2.23-no-more-exactarchlist.patch:
+  Version bump, ebuild cleanup
 
   29 May 2008; Ali Polatel <hawking@gentoo.org> yum-2.6.1.ebuild,
   yum-3.2.8.ebuild:

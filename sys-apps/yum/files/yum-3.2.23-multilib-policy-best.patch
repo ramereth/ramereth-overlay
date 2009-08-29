@@ -1,0 +1,11 @@
+--- yum/config.py~	2008-03-14 15:52:03.000000000 -0400
++++ yum/config.py	2008-03-14 15:52:03.000000000 -0400
+@@ -636,7 +636,7 @@
+     mdpolicy = SelectionOption('group:primary',
+                                ('instant', 'group:all', 'group:main',
+                                 'group:small', 'group:primary'))
+-    multilib_policy = SelectionOption('all',('best', 'all'))
++    multilib_policy = SelectionOption('best',('best', 'all'))
+                  # all == install any/all arches you can
+                  # best == use the 'best  arch' for the system
+                  

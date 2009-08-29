@@ -2,6 +2,8 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/sys-apps/yum/yum-3.2.8.ebuild,v 1.5 2008/05/29 18:04:58 hawking Exp $
 
+EAPI=2
+
 NEED_PYTHON=1
 inherit python eutils multilib
 
@@ -14,32 +16,24 @@ SLOT="0"
 KEYWORDS="~amd64 ~ppc ~ppc64 ~x86"
 IUSE=""
 
-RDEPEND=">=dev-lang/python-2.5
-	app-arch/rpm
-	dev-python/sqlitecachec
+RDEPEND=">=dev-lang/python-2.5[sqlite]
+	app-arch/rpm[python]
+	>=dev-python/sqlitecachec-1.1.0
 	dev-python/celementtree
-	dev-libs/libxml2
-	dev-python/urlgrabber
+	dev-libs/libxml2[python]
+	>=dev-python/urlgrabber-3.9.0
 	dev-python/iniparse
 	app-crypt/gpgme"
 
-src_unpack() {
-	unpack ${A}
-	cd "${S}"
+src_prepare() {
+	# Fedora patches
+	epatch "${FILESDIR}/${P}-mirror-priority.patch"
+	epatch "${FILESDIR}/${P}-multilib-policy-best.patch"
+	# move this patch to gentoo mirrors
+	EPATCH_OPTS="-p1 -d ${S}" epatch "${FILESDIR}/${P}-14-HEAD.patch.bz2"
+	epatch "${FILESDIR}/${P}-no-more-exactarchlist.patch"
+	# gentoo patch
 	epatch "${FILESDIR}/${P}-typeerror-fix.patch"
-}
-
-pkg_setup() {
-	_built_with_use() {
-		local pkg=$1 ; shift
-		if ! built_with_use ${pkg} "$@" ; then
-			eerror "You need to install ${pkg} with USE='$*'"
-			die "re-emerge ${pkg} with USE='$*'"
-		fi
-	}
-	_built_with_use dev-libs/libxml2 python
-	_built_with_use dev-lang/python sqlite
-	_built_with_use app-arch/rpm python
 }
 
 src_install() {
