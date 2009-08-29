@@ -2,6 +2,12 @@
 # Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
 # $Header: /var/cvsroot/gentoo-x86/app-arch/rpm/ChangeLog,v 1.92 2008/07/23 21:26:25 cardoe Exp $
 
+*rpm-4.7.1 (29 Aug 2009)
+
+  29 Aug 2009; Lance Albertson <ramereth@gentoo.org> +rpm-4.7.1.ebuild,
+  +files/rpm-4.7.1-geode-i686.patch:
+  Version bump
+
   26 Aug 2009; Lance Albertson <ramereth@gentoo.org>
   -files/rpm-4.4.2.1-no-popt.patch, -files/rpm-4.4.2.2-autofoo.patch,
   -files/rpm-4.4.2.2-devel-autodep.patch,
