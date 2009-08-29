@@ -1,0 +1,90 @@
+# ChangeLog for dev-python/urlgrabber
+# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
+# $Header: /var/cvsroot/gentoo-x86/dev-python/urlgrabber/ChangeLog,v 1.22 2009/01/24 13:00:13 aballier Exp $
+
+*urlgrabber-3.9.0 (29 Aug 2009)
+
+  29 Aug 2009; Lance Albertson <ramereth@gentoo.org>
+  +urlgrabber-3.9.0.ebuild, +files/urlgrabber-3.9.0-8-HEAD.patch.bz2:
+  Version bump, QA fixes, etc
+
+  24 Jan 2009; Alexis Ballier <aballier@gentoo.org> urlgrabber-3.1.0.ebuild:
+  keyword ~x86-fbsd
+
+  08 Jan 2009; Patrick Lauer <patrick@gentoo.org> -urlgrabber-3.0.0.ebuild:
+  Removing old
+
+  02 Dec 2008; Brent Baude <ranger@gentoo.org> ChangeLog:
+  stable ppc64, bug 249218
+
+  02 Dec 2008; Brent Baude <ranger@gentoo.org> urlgrabber-3.1.0.ebuild:
+  stable ppc64, bug 249218
+
+  30 Nov 2008; Markus Meier <maekke@gentoo.org> urlgrabber-3.1.0.ebuild:
+  amd64/x86 stable, bug #249218
+
+  29 Nov 2008; Tobias Scherbaum <dertobi123@gentoo.org>
+  urlgrabber-3.1.0.ebuild:
+  ppc stable, bug #est
+
+*urlgrabber-3.1.0 (13 May 2008)
+
+  13 May 2008; Ali Polatel <hawking@gentoo.org> +urlgrabber-3.1.0.ebuild:
+  Version bump.
+
+  28 Mar 2008; Markus Meier <maekke@gentoo.org> urlgrabber-3.0.0.ebuild:
+  x86 stable, bug #215098
+
+  27 Mar 2008; Markus Rothe <corsair@gentoo.org> urlgrabber-3.0.0.ebuild:
+  Stable on ppc64; bug #215098
+
+  14 Jan 2008; Tobias Scherbaum <dertobi123@gentoo.org>
+  urlgrabber-3.0.0.ebuild:
+  ppc. stable
+
+  15 Nov 2007; Samuli Suominen <drac@gentoo.org> urlgrabber-3.0.0.ebuild:
+  amd64 stable wrt #197514
+
+  15 Nov 2007; Markus Rothe <corsair@gentoo.org> urlgrabber-3.0.0.ebuild:
+  Added ~ppc64
+
+  03 Apr 2007; Peter Weller <welp@gentoo.org> urlgrabber-2.9.6.ebuild:
+  Keyworded ~x86-fbsd
+
+*urlgrabber-3.0.0 (03 Feb 2007)
+
+  03 Feb 2007; Lukasz Strzygowski <lucass@gentoo.org>
+  -urlgrabber-2.9.0.ebuild, +urlgrabber-3.0.0.ebuild:
+  Version bump. Removed old version.
+
+  03 Feb 2007; nixnut <nixnut@gentoo.org> urlgrabber-2.9.6.ebuild:
+  Stable on ppc wrt bug 157797
+
+  02 Feb 2007; Raúl Porcel <armin76@gentoo.org> urlgrabber-2.9.6.ebuild:
+  x86 stable wrt bug 157797
+
+  01 Apr 2006; Aron Griffis <agriffis@gentoo.org> urlgrabber-2.9.6.ebuild:
+  Mark 2.9.6 ~ia64
+
+  15 Aug 2005; Luis Medinas <metalgod@gentoo.org> urlgrabber-2.9.6.ebuild:
+  Added ~amd64 keywords.
+
+*urlgrabber-2.9.6 (28 Jun 2005)
+
+  28 Jun 2005; Lukasz Strzygowski <lucass@gentoo.org>
+  +urlgrabber-2.9.6.ebuild:
+  Version bump. Closing bug #96420.
+
+  06 Mar 2005; Joseph Jezak <josejx@gentoo.org> urlgrabber-2.9.0.ebuild:
+  Marked ~ppc.
+
+  27 Feb 2005; Lukasz Strzygowski <lucass@gentoo.org> metadata.xml,
+  urlgrabber-2.9.0.ebuild:
+  Marked stable on x86. Added description to metadata.
+
+*urlgrabber-2.9.0 (10 Dec 2004)
+
+  10 Dec 2004; Bryan Østergaard <kloeri@gentoo.org> +metadata.xml,
+  +urlgrabber-2.9.0.ebuild:
+  Initial import, bug 62771.
+
