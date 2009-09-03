@@ -1,0 +1,10 @@
+# ChangeLog for dev-python/pyamf
+# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
+# $Header: $
+
+*pyamf-0.4.2 (03 Sep 2009)
+
+  03 Sep 2009; Lance Albertson <ramereth@gentoo.org> +pyamf-0.4.2.ebuild,
+  +metadata.xml:
+  Initial ebuild
+
