@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<herd></herd>
+	<maintainer>
+		<email>ramereth@gentoo.org</email>
+		<name>Lance Albertson</name>
+	</maintainer>
+	<longdescription lang="en">
+	Pydra is a distributed and parallel computing framework for python. Pydra
+	aims to provide an easy to use framework for writing and running
+	parallelized programs for developers, and an easy to manage cluster for the
+	administrators.
+
+	some of the main features that are implemented or will be implemented in
+	1.0:
+
+	* Easily defined tasks - Clustering software is only as useful as the jobs
+	  that can be written for it. To this end pydra hides parallelization code
+	  and makes writing tasks simple.
+	* Map-Reduce support - Map-Reduce is a  concept introduced by google. Pydra
+	  currently supports most of the Map-Reduce concept. The only missing piece
+	  is parallelizing the map function.
+	* Network auto-discovery - To aide in setting up a cluster nodes will be
+	  discoverable via the
+	* Job queueing - Jobs will be started immediately if they can be, otherwise
+	  Pydra will queue jobs automatically
+	* Web based interface - Through the management interface the cluster can be
+	  managed, and tasks can be run or
+	* Central cluster configuration - Nodes can be configured and updated via
+	  the management interface
+    * History - Detailed history of jobs.
+	* Fault tolerance - Things go wrong, pydra is designed to gracefully recover
+	  when it happens.
+	* security - Pydra remotely executes code, the controls for doing so are
+	  tightly wrapped to prevent tampering with your cluster. 
+	</longdescription>
+	<use>
+		<flag name="server">Enable pydra master node support</flag>
+	</use>
+</pkgmetadata>
+

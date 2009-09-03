@@ -1,0 +1,17 @@
+#!/sbin/runscript
+
+depend() {
+	need net
+}
+
+start() {
+	ebegin "Starting pydra-master"
+	start-stop-daemon --start --quiet --exec /usr/sbin/pydra_master
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping pydra-master"
+	start-stop-daemon --stop --quiet --pidfile /var/run/pydra/master.pid
+	eend $?
+}

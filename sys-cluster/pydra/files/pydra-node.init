@@ -1,0 +1,17 @@
+#!/sbin/runscript
+
+depend() {
+	need net
+}
+
+start() {
+	ebegin "Starting pydra-node"
+	start-stop-daemon --start --quiet --exec /usr/sbin/pydra_node
+	eend $?
+}
+
+stop() {
+	ebegin "Stopping pydra-node"
+	start-stop-daemon --stop --quiet --pidfile /var/run/pydra/node.pid
+	eend $?
+}
