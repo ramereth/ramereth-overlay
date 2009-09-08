@@ -28,8 +28,7 @@ DEPEND="server? ( dev-python/django )
 	dev-python/twisted
 	dev-python/twisted-conch
 	dev-python/pycrypto
-	dev-python/simplejson
-	dev-python/pyamf"
+	dev-python/simplejson"
 RDEPEND="${DEPEND}"
 
 DOCS="README INSTALL"
