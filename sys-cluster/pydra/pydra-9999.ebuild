@@ -8,7 +8,6 @@ inherit distutils eutils
 
 if [[ ${PV} == "9999" ]] ; then
 	EGIT_REPO_URI="git://trac.osuosl.org/pydra"
-	EGIT_BRANCH="dist"
 	inherit git
 else
 	SRC_URI="http://staff.osuosl.org/~peter/myfiles/pydra/${P}.tar.gz"
