@@ -1,0 +1,15 @@
+# ChangeLog for sys-kernel/dracut
+# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
+# $Header: $
+
+*dracut-002 (27 Sep 2009)
+
+  27 Sep 2009; Lance Albertson <ramereth@gentoo.org> +dracut-002.ebuild,
+  +files/dracut-002-custom-paths.patch,
+  +files/dracut-002-dir-symlinks.patch, +files/dracut-002-unmount.patch,
+  +metadata.xml:
+  Initial ebuild based from #278442
+
+  Thanks to Ambroz Bizjak <ambro@b4ever.net> for the initial ebuild and
+  patches
+
