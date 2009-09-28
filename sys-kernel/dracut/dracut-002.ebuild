@@ -15,6 +15,7 @@ SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE="crypt dmraid iscsi lvm nbd nfs md selinux"
 
+# common networking deps
 NETWORK_DEPS="sys-apps/iproute2 net-misc/dhcp net-misc/bridge-utils"
 
 RDEPEND="app-shells/dash
@@ -86,7 +87,7 @@ pkg_postinst() {
 	elog ' root=/dev/???? resume=/dev/????'
 	elog ''
 	elog 'Configuration is in /etc/dracut.conf.'
-	elog 'The default config includes all available disk drivers and'
-	elog 'should work on almost any system.'
-	elog 'To include only drivers for this system, use the "-H" option.'
+	elog 'The default config is very minimal and is highly recommended you'
+	elog 'adjust based on your needs. To include only drivers for this system,'
+	elog 'use the "-H" option.'
 }
