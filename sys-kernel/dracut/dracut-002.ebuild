@@ -13,7 +13,9 @@ SRC_URI="mirror://sourceforge/${PN}/${P}.tar.bz2"
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="crypt dmraid lvm md network selinux"
+IUSE="crypt dmraid iscsi lvm nbd nfs md selinux"
+
+NETWORK_DEPS="sys-apps/iproute2 net-misc/dhcp net-misc/bridge-utils"
 
 RDEPEND="app-shells/dash
 	>=sys-apps/module-init-tools-3.6
@@ -34,9 +36,9 @@ RDEPEND="app-shells/dash
 	dmraid? ( sys-fs/dmraid )
 	lvm? ( >=sys-fs/lvm2-2.02.33 )
 	md? ( sys-fs/mdadm )
-	network? ( sys-apps/iproute2 net-misc/dhcp net-misc/bridge-utils
-		net-fs/nfs-utils net-nds/rpcbind sys-block/open-iscsi[utils]
-		sys-block/nbd )
+	nfs? ( net-fs/nfs-utils net-nds/rpcbind ${NETWORK_DEPS} )
+	iscsi? ( sys-block/open-iscsi[utils] ${NETWORK_DEPS} )
+	nbd? ( sys-block/nbd ${NETWORK_DEPS} )
 	selinux? ( sys-libs/libselinux sys-libs/libsepol )"
 DEPEND="${RDEPEND}"
 
@@ -62,9 +64,13 @@ src_install() {
 		! use ${module} && rm -rf ${modules_dir}/90${module}
 	done
 	# disable all network modules
-	if ! use network ; then
+	for module in iscsi nbd nfs ; do
+		! use ${module} && rm -rf ${modules_dir}/95${module}
+	done
+	# if no networking at all, disable the rest
+	if ! use iscsi && ! use nbd && ! use nfs ; then
 		rm -rf ${modules_dir}/40network
-		rm -rf ${modules_dir}/95{iscsi,nbd,nfs,fcoe}
+		rm -rf ${modules_dir}/95fcoe
 	fi
 }
 
