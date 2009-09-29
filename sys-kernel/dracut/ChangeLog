@@ -2,6 +2,11 @@
 # Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
 # $Header: $
 
+  29 Sep 2009; Lance Albertson <ramereth@gentoo.org> dracut-002.ebuild,
+  +files/dracut-002-add-missing-functions.patch,
+  +files/dracut-002-gencmdline-check-for-keyboard-i18n-files.patch:
+  Fix dracut-gencmdline issues
+
 *dracut-002 (27 Sep 2009)
 
   27 Sep 2009; Lance Albertson <ramereth@gentoo.org> +dracut-002.ebuild,

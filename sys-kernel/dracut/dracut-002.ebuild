@@ -47,6 +47,8 @@ src_prepare() {
 	epatch "${FILESDIR}/${P}-unmount.patch"
 	epatch "${FILESDIR}/${P}-custom-paths.patch"
 	epatch "${FILESDIR}/${P}-dir-symlinks.patch"
+	epatch "${FILESDIR}/${P}-add-missing-functions.patch"
+	epatch "${FILESDIR}/${P}-gencmdline-check-for-keyboard-i18n-files.patch"
 }
 
 src_compile() {
