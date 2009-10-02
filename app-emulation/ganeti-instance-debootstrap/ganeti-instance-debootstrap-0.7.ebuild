@@ -29,7 +29,7 @@ src_prepare() {
 }
 
 src_configure() {
-	econf --docdir=/usr/share/doc/${P}
+	econf --docdir=/usr/share/doc/${P} || die "econf failed"
 }
 
 src_install() {
