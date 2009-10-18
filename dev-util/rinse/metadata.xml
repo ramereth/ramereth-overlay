@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<herd></herd>
+	<maintainer>
+		<email>ramereth@gentoo.org</email>
+		<name>Lance Albertson</name>
+	</maintainer>
+	<longdescription lang="en">
+	The rinse utility is designed to install a minimal RPM-based distribution
+	of GNU/Linux within a local directory.
+
+	The purpose and usage are analogous to the 'debootstrap' utility familiar to
+	users of Debian GNU/Linux.
+	</longdescription>
+</pkgmetadata>
+
