@@ -1,0 +1,78 @@
+# HG changeset patch
+# User Lance Albertson <lance@osuosl.org>
+# Date 1256252066 25200
+# Node ID 1916296f4744b0e3f61436c500b2dc87ac35be81
+# Parent  e605a6db6faf6cb8a3f43256eaac4a2daa2359b3
+Ensure that we only grab the actual release package, not the release-notes package
+
+This was broken on Fedora 10
+
+diff -r e605a6db6faf -r 1916296f4744 bin/rinse
+--- a/bin/rinse	Wed Oct 21 15:47:21 2009 -0700
++++ b/bin/rinse	Thu Oct 22 15:54:26 2009 -0700
+@@ -1127,7 +1127,7 @@
+         #
+         my $cmd =
+           "rpm2cpio $file | (cd $CONFIG{'directory'} ; cpio --extract --make-directories --no-absolute-filenames --preserve-modification-time) 2>/dev/null >/dev/null";
+-        if ( $file =~ /(fedora|centos|redhat|mandriva)-release-/ )
++        if ( $file =~ /(fedora|centos|redhat|mandriva)-release-([0-9]).*/ )
+         {
+             my $rpmname = basename($file);
+             $postcmd =
+# HG changeset patch
+# User Lance Albertson <lance@osuosl.org>
+# Date 1256252441 25200
+# Node ID 59af5fa464453873c8f98d7adfeb723c3c5b803c
+# Parent  1916296f4744b0e3f61436c500b2dc87ac35be81
+Fix Fedora 10 installs
+
+ * No need to set mirror in yum.conf, yum package comes with it
+ * Create /dev/null to keep things happy
+ * Don't copy cache from F9
+
+diff -r 1916296f4744 -r 59af5fa46445 scripts/fedora-core-10/post-install.sh
+--- a/scripts/fedora-core-10/post-install.sh	Thu Oct 22 15:54:26 2009 -0700
++++ b/scripts/fedora-core-10/post-install.sh	Thu Oct 22 16:00:41 2009 -0700
+@@ -52,27 +52,6 @@
+     arch=x86_64
+ fi
+ 
+-echo "  Creating yum.conf"
+-cat > ${prefix}/etc/yum.conf <<EOF
+-[main]
+-cachedir=/var/cache/yum
+-debuglevel=1
+-reposdir=/dev/null
+-logfile=/var/log/yum.log
+-retries=20
+-obsoletes=1
+-gpgcheck=0
+-assumeyes=1
+-
+-# repos
+-
+-[core]
+-name=core
+-baseurl=$mirror
+-
+-EOF
+-
+-
+ #
+ #  4.  Run "yum install yum".
+ #
+@@ -82,11 +61,13 @@
+ fi
+ mount -o bind /proc ${prefix}/proc
+ 
++echo "  Creating /dev/null"
++mknod ${prefix}/dev/null c 1 3
++
+ echo "  Priming the yum cache"
+ if [ ! -d "${prefix}/var/cache/yum/core/packages/" ]; then
+     mkdir -p ${prefix}/var/cache/yum/core/packages
+ fi
+-cp /var/cache/rinse/fedora-core-9.$ARCH/* ${prefix}/var/cache/yum/core/packages/
+ 
+ echo "  Bootstrapping yum"
+ chroot ${prefix} /sbin/ldconfig
