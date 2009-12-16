@@ -1,6 +1,6 @@
 # Copyright 1999-2009 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: $
+# $Header: /var/cvsroot/gentoo-x86/app-emulation/ganeti/ganeti-2.0.4.ebuild,v 1.2 2009/12/09 00:41:09 ramereth Exp $
 
 EAPI=2
 
@@ -16,7 +16,7 @@ KEYWORDS="~amd64 ~x86"
 IUSE="kvm xen drbd"
 
 DEPEND="xen? ( >=app-emulation/xen-3.0 )
-	kvm? ( app-emulation/kvm )
+	kvm? ( app-emulation/qemu-kvm )
 	drbd? ( >=sys-cluster/drbd-8.0 )
 	dev-libs/openssl
 	dev-python/pyopenssl
@@ -49,7 +49,7 @@ src_configure () {
 
 src_install () {
 	emake DESTDIR="${D}" install || die "emake install failed"
-	newinitd "${FILESDIR}"/ganeti.initd ganeti
+	newinitd "${FILESDIR}"/ganeti2.initd ganeti
 	dobashcompletion doc/examples/bash_completion ganeti
 	dodoc DEVNOTES INSTALL NEWS README doc/*.rst doc/*.txt
 	rm -rf "${D}"/usr/share/doc/ganeti

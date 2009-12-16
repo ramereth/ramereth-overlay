@@ -1,19 +1,23 @@
 # Copyright 1999-2009 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
-# $Header: /var/cvsroot/gentoo-x86/app-emulation/ganeti/ganeti-2.0.3.ebuild,v 1.2 2009/12/09 00:41:09 ramereth Exp $
+# $Header: /var/cvsroot/gentoo-x86/app-emulation/ganeti/ganeti-2.0.4.ebuild,v 1.2 2009/12/09 00:41:09 ramereth Exp $
 
 EAPI=2
 
 inherit eutils confutils bash-completion
 
+MY_PV="${PV/_rc/~rc}"
+MY_P="${PN}-${MY_PV}"
 DESCRIPTION="Ganeti is a virtual server management software tool"
 HOMEPAGE="http://code.google.com/p/ganeti/"
-SRC_URI="http://ganeti.googlecode.com/files/${P}.tar.gz"
+SRC_URI="http://ganeti.googlecode.com/files/${MY_P}.tar.gz"
 
 LICENSE="GPL-2"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
 IUSE="kvm xen drbd"
+
+S="${WORKDIR}/${MY_P}"
 
 DEPEND="xen? ( >=app-emulation/xen-3.0 )
 	kvm? ( app-emulation/qemu-kvm )
@@ -21,6 +25,7 @@ DEPEND="xen? ( >=app-emulation/xen-3.0 )
 	dev-libs/openssl
 	dev-python/pyopenssl
 	dev-python/pyparsing
+	dev-python/pyinotify
 	dev-python/simplejson
 	net-analyzer/arping
 	net-misc/bridge-utils
@@ -31,7 +36,7 @@ DEPEND="xen? ( >=app-emulation/xen-3.0 )
 RDEPEND="${DEPEND}"
 
 src_prepare () {
-	epatch "${FILESDIR}/${P}-gentoo-brctl-path.patch"
+	epatch "${FILESDIR}/${P}-fix-brctl-path-for-gentoo.patch"
 }
 
 pkg_setup () {
@@ -49,12 +54,14 @@ src_configure () {
 
 src_install () {
 	emake DESTDIR="${D}" install || die "emake install failed"
-	newinitd "${FILESDIR}"/ganeti2.initd ganeti
+	newinitd "${FILESDIR}"/ganeti-2.1.initd ganeti
 	dobashcompletion doc/examples/bash_completion ganeti
-	dodoc DEVNOTES INSTALL NEWS README doc/*.rst doc/*.txt
+	dodoc INSTALL NEWS README doc/*.{rst,png}
 	rm -rf "${D}"/usr/share/doc/ganeti
 	docinto examples
-	dodoc doc/examples/dumb-allocator doc/examples/ganeti.cron
+	dodoc doc/examples/{dumb-allocator,ganeti.cron,gnt-config-backup}
+	docinto examples/hooks
+	dodoc doc/examples/hooks/{ipsec,ethers}
 
 	keepdir /var/{lib,log,run}/ganeti/
 	keepdir /usr/share/ganeti/os/
