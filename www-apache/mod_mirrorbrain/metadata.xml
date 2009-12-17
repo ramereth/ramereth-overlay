@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<herd></herd>
+	<maintainer>
+		<email>ramereth@gentoo.org</email>
+		<name>Lance Albertson</name>
+	</maintainer>
+	<longdescription lang="en">
+	MirrorBrain is an open source framework to run a content delivery network
+	using mirror servers. It solves a challenge that many popular open source
+	projects face - a flood of download requests, often magnitudes more than a
+	single site could practically handle.
+	</longdescription>
+    <use>
+        <flag name="memcache">Enable memcached support</flag>
+    </use>
+</pkgmetadata>
+
