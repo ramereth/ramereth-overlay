@@ -44,7 +44,7 @@ check_exitcode() {
 
 start_action() {
     # called as start_action daemon-name
-    local daemon="${1}"; shift
+    local daemon="${1}"
     ebegin "Starting ${daemon}"
     ${DAEMON_UTIL} start "${@}"
     check_exitcode ${?}
@@ -52,7 +52,7 @@ start_action() {
 
 stop_action() {
     # called as stop_action daemon-name
-    local daemon="${1}"; shift
+    local daemon="${1}"
     ebegin "Stopping ${daemon}"
     ${DAEMON_UTIL} stop "${@}"
     check_exitcode ${?}
