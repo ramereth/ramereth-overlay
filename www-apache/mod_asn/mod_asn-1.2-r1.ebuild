@@ -2,12 +2,12 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-inherit apache-module subversion
+inherit apache-module
 
 DESCRIPTION="Apache module which does AS and network prefix lookups"
 HOMEPAGE="http://mirrorbrain.org/mod_asn"
 LICENSE="Apache-2.0"
-ESVN_REPO_URI="http://mirrorbrain.org/files/releases/${P}.tar.gz"
+SRC_URI="http://mirrorbrain.org/files/releases/${P}.tar.gz"
 
 KEYWORDS="~x86 ~amd64"
 IUSE=""

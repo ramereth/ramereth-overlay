@@ -2,6 +2,13 @@
 # Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
 # $Header: $
 
+*mod_asn-1.3 (17 Dec 2009)
+*mod_asn-1.2-r1 (17 Dec 2009)
+
+  17 Dec 2009; Lance Albertson <ramereth@gentoo.org> -mod_asn-1.2.ebuild,
+  +mod_asn-1.2-r1.ebuild, +mod_asn-1.3.ebuild:
+  Version bump, Fix ebuild so it actually works
+
 *mod_asn-1.2 (26 Aug 2009)
 
   26 Aug 2009; Lance Albertson <ramereth@gentoo.org> +files/30_mod_asn.conf,
