@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pkgmetadata SYSTEM "http://www.gentoo.org/dtd/metadata.dtd">
+<pkgmetadata>
+	<herd></herd>
+	<maintainer>
+		<email>ramereth@gentoo.org</email>
+		<name>Lance Albertson</name>
+	</maintainer>
+	<longdescription lang="en">
+	A set of scripts to automate catalyst builds for Gentoo. This package is
+	derived from the OSU Open Source Lab's scripts and adapted into a package.
+	</longdescription>
+</pkgmetadata>
+
