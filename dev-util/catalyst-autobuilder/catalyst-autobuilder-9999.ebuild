@@ -31,7 +31,7 @@ src_compile() {
 
 src_install() {
 	insinto /etc/catalyst
-	doins -r etc/catalyst
+	doins -r etc/catalyst/*
 	insinto /usr/share/${PN}
 	doins -r libs
 	dosbin bin/build-stages
