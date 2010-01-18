@@ -1,0 +1,29 @@
+#!/sbin/runscript
+# Copyright 1999-2010 Gentoo Foundation
+# Distributed under the terms of the GNU General Public License v2
+# $Header: $
+
+mcollectived="/usr/sbin/mcollectived"
+pidfile="/var/run/mcollectived"
+
+depend() {
+    need net
+}
+
+start() {
+    ebegin "Starting mcollectived"
+    start-stop-daemon --start --quiet --exec ${mcollectived} -- --pid=${pidfile} --config="/etc/mcollective/server.cfg"
+    eend $?
+}
+
+stop() {
+    ebegin "Stopping mcollectived"
+    start-stop-daemon --stop --quiet --pidfile ${pidfile}
+    eend $?
+}
+
+restart() {
+    srv_stop
+    sleep 2
+    srv_start
+}

@@ -1,0 +1,10 @@
+# ChangeLog for sys-apps/mcollective
+# Copyright 1999-2010 Gentoo Foundation; Distributed under the GPL v2
+# $Header: $
+
+*mcollective-0.4.2 (18 Jan 2010)
+
+  18 Jan 2010; Lance Albertson <ramereth@gentoo.org>
+  +mcollective-0.4.2.ebuild, +files/mcollectived.initd, +metadata.xml:
+  Initial ebuild
+
