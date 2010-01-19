@@ -14,5 +14,5 @@ IUSE=""
 USE_RUBY="ruby18"
 
 DEPEND=""
-RDEPEND="dev-ruby/stompserver"
+RDEPEND=""
 
