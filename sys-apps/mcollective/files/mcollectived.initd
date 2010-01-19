@@ -12,7 +12,8 @@ depend() {
 
 start() {
     ebegin "Starting mcollectived"
-    start-stop-daemon --start --quiet --exec ${mcollectived} -- --pid=${pidfile} --config="/etc/mcollective/server.cfg"
+    start-stop-daemon --start --quiet --exec ${mcollectived} -- \
+        --pid=${pidfile} --config="/etc/mcollective/server.cfg"
     eend $?
 }
 
@@ -23,7 +24,7 @@ stop() {
 }
 
 restart() {
-    srv_stop
+    svc_stop
     sleep 2
-    srv_start
+    svc_start
 }

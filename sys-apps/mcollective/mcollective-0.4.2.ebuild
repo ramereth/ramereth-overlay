@@ -33,3 +33,15 @@ src_install() {
 	cd etc
 	for cfg in *.dist ; do newins "${cfg}" "${cfg%%.dist}" ; done
 }
+
+pkg_postinst() {
+	einfo "Mcollective requires a stomp server installed and functioning before"
+	einfo "you can use it. The recommended server to use is ActiveMQ [1] but"
+	einfo "any other stomp compatible server should work."
+	einfo
+	einfo "It is recommended you read the \'getting started\' guide [2] if this"
+	einfo "is a new installation"
+	einfo
+	einfo "[1] http://activemq.apache.org/"
+	einfo "[2] http://code.google.com/p/mcollective/wiki/GettingStarted"
+}
