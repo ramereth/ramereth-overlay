@@ -2,6 +2,12 @@
 # Copyright 1999-2010 Gentoo Foundation; Distributed under the GPL v2
 # $Header: $
 
+*mcollective-0.4.4 (21 Apr 2010)
+
+  21 Apr 2010; Lance Albertson <ramereth@gentoo.org>
+  +mcollective-0.4.4.ebuild:
+  Version bump
+
 *mcollective-0.4.3 (25 Jan 2010)
 
   25 Jan 2010; Lance Albertson <ramereth@gentoo.org>
