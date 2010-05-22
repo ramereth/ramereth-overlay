@@ -1,0 +1,41 @@
+# ChangeLog for app-emulation/ganeti-instance-image
+# Copyright 1999-2010 Gentoo Foundation; Distributed under the GPL v2
+# $Header: $
+
+*ganeti-instance-image-0.4 (07 May 2010)
+
+  07 May 2010; Lance Albertson <ramereth@gentoo.org>
+  -ganeti-instance-image-0.1.ebuild, -ganeti-instance-image-0.2.ebuild,
+  +ganeti-instance-image-0.4.ebuild:
+  Version bump
+
+*ganeti-instance-image-0.3.1 (12 Apr 2010)
+
+  12 Apr 2010; Lance Albertson <ramereth@gentoo.org>
+  +ganeti-instance-image-0.3.1.ebuild:
+  Bugfix bump
+
+*ganeti-instance-image-0.3 (02 Apr 2010)
+
+  02 Apr 2010; Lance Albertson <ramereth@gentoo.org>
+  +ganeti-instance-image-0.3.ebuild:
+  Version bump
+
+*ganeti-instance-image-0.2 (30 Mar 2010)
+
+  30 Mar 2010; Lance Albertson <ramereth@gentoo.org>
+  +ganeti-instance-image-0.2.ebuild:
+  Version bump
+
+*ganeti-instance-image-0.1 (11 Mar 2010)
+
+  11 Mar 2010; Lance Albertson <ramereth@gentoo.org>
+  +ganeti-instance-image-0.1.ebuild, ganeti-instance-image-9999.ebuild:
+  First release!
+
+*ganeti-instance-image-9999 (25 Nov 2009)
+
+  25 Nov 2009; Lance Albertson <ramereth@gentoo.org>
+  +ganeti-instance-image-9999.ebuild, +metadata.xml:
+  Add initial git-based ebuild
+
