@@ -3,7 +3,10 @@
 # $Header: $
 
 EAPI="2"
-inherit ruby
+
+USE_RUBY="ruby18 ree18"
+
+inherit ruby-ng
 
 DESCRIPTION="Framework to build server orchestration or parallel job execution
 systems"
@@ -16,15 +19,16 @@ KEYWORDS="~x86 ~amd64"
 IUSE="doc"
 
 DEPEND=""
-RDEPEND="dev-ruby/stomp"
+RDEPEND="=dev-ruby/stomp-1.1"
 
-src_install() {
-	local sitelibdir
-	sitelibdir="$(${RUBY} -rrbconfig -e 'puts Config::CONFIG["sitelibdir"]')"
-	insinto "${sitelibdir}"
-	doins -r lib/*
+src_compile() {
+	einfo "nothing to compile"
+}
+
+each_ruby_install() {
+	doruby -r lib/*
 	insinto /usr/libexec/mcollective
-	doins -r plugins/*
+	doins -r plugins/mcollective/*
 	insinto /etc/mcollective
 	dosbin mc-*
 	newsbin mcollectived.rb mcollectived
