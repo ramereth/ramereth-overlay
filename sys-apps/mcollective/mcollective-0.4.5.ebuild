@@ -27,15 +27,20 @@ src_compile() {
 
 each_ruby_install() {
 	doruby -r lib/*
-	insinto /usr/libexec/mcollective
-	doins -r plugins/mcollective/*
+	insinto /usr/share/mcollective
+	doins -r plugins
 	insinto /etc/mcollective
 	dosbin mc-*
 	newsbin mcollectived.rb mcollectived
 	use doc && dohtml -r doc/*
+	dodoc changelog activemq.xml.templ
 	newinitd "${FILESDIR}"/mcollectived.initd mcollectived
 	cd etc
-	for cfg in *.dist ; do newins "${cfg}" "${cfg%%.dist}" ; done
+	for cfg in *.dist ; do
+		newins "${cfg}" "${cfg%%.dist}"
+		dosed "s:^libdir.*:libdir = /usr/share/mcollective/plugins:" \
+			/etc/mcollective/${cfg%%.dist}
+	done
 }
 
 pkg_postinst() {

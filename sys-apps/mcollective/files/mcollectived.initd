@@ -3,7 +3,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-mcollectived="/usr/sbin/mcollectived"
+mcollectived="/usr/bin/ruby /usr/sbin/mcollectived"
 pidfile="/var/run/mcollectived"
 
 depend() {
