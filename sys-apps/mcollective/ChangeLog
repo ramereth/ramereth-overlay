@@ -2,6 +2,12 @@
 # Copyright 1999-2010 Gentoo Foundation; Distributed under the GPL v2
 # $Header: $
 
+*mcollective-0.4.6 (14 Jun 2010)
+
+  14 Jun 2010; Lance Albertson <ramereth@gentoo.org>
+  +mcollective-0.4.6.ebuild:
+  mcollective: version bump
+
   10 Jun 2010; Lance Albertson <ramereth@gentoo.org>
   mcollective-0.4.5.ebuild, files/mcollectived.initd:
   Adjust installs paths to match upstream and fix init script
