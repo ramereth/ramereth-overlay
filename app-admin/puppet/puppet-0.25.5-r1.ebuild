@@ -17,8 +17,7 @@ SLOT="0"
 IUSE="augeas emacs ldap rrdtool shadow vim-syntax"
 KEYWORDS="~amd64 ~ppc ~sparc ~x86"
 
-DEPEND="dev-lang/ruby[ssl]
-	emacs? ( virtual/emacs )
+DEPEND="emacs? ( virtual/emacs )
 	>=dev-ruby/facter-1.5.1"
 RDEPEND="${DEPEND}
 	>=app-portage/eix-0.18.0
