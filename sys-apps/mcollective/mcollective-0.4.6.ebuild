@@ -16,7 +16,7 @@ SRC_URI="http://mcollective.googlecode.com/files/${P}.tgz"
 LICENSE="Apache-2.0"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="doc"
+IUSE="doc +client"
 
 DEPEND=""
 RDEPEND="dev-ruby/stomp"
@@ -30,7 +30,7 @@ each_ruby_install() {
 	insinto /usr/share/mcollective
 	doins -r plugins
 	insinto /etc/mcollective
-	dosbin mc-*
+	use client && dosbin mc-*
 	newsbin mcollectived.rb mcollectived
 	use doc && dohtml -r doc/*
 	dodoc changelog activemq.xml.templ

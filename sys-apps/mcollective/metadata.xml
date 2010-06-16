@@ -6,9 +6,11 @@
 		<email>ramereth@gentoo.org</email>
 		<name>Lance Albertson</name>
 	</maintainer>
+	<use>
+		<flag name="client">Install client utilities</flag>
+	</use>
 	<longdescription lang="en">
-	 The Marionette Collective aka. mcollective is a framework to build server
-	 orchestration or parallel job execution systems.
+	mcollective is a framework to build server orchestration or parallel job
+	execution systems.
 	</longdescription>
 </pkgmetadata>
-
