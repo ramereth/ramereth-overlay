@@ -8,7 +8,7 @@ S="${WORKDIR}/${MY_P}"
 
 DESCRIPTION="IPv4 and IPv4 range index type for PostgreSQL"
 HOMEPAGE="http://pgfoundry.org/projects/ip4r"
-SRC_URI="http://pgfoundry.org/frs/download.php/2278/${MY_P}.tar.gz"
+SRC_URI="http://pgfoundry.org/frs/download.php/2607/${MY_P}.tar.gz"
 
 LICENSE="POSTGRESQL"
 SLOT="0"

@@ -1,6 +1,13 @@
 # ChangeLog for dev-db/postgresql-ip4r
-# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
+# Copyright 1999-2010 Gentoo Foundation; Distributed under the GPL v2
 # $Header: $
+
+*postgresql-ip4r-1.05 (21 Jun 2010)
+
+  21 Jun 2010; Lance Albertson <ramereth@gentoo.org>
+  postgresql-ip4r-1.03.ebuild, postgresql-ip4r-1.04.ebuild,
+  +postgresql-ip4r-1.05.ebuild:
+  Version bump, fix deps
 
 *postgresql-ip4r-1.04 (17 Dec 2009)
 
