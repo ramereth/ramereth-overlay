@@ -1,9 +1,0 @@
-# ChangeLog for app-misc/createrepo
-# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
-# $Header: $
-
-  25 Aug 2009; Lance Albertson <ramereth@gentoo.org>
-  createrepo-0.4.11.ebuild, createrepo-0.9.5.ebuild,
-  createrepo-0.9.7.ebuild, +metadata.xml:
-  QA Fixes, keyword it properly
-
