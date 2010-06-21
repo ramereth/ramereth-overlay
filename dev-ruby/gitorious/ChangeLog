@@ -1,8 +1,0 @@
-# ChangeLog for dev-ruby/gitorious
-# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
-# $Header: $
-
-  25 Aug 2009; Lance Albertson <ramereth@gentoo.org> gitorious-9999.ebuild,
-  +metadata.xml:
-  New ebuild w/ QA Fixes
-
