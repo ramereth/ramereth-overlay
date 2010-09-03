@@ -1,0 +1,78 @@
+commit e4d1b9772202473dd0219c157299336ad8845ecb
+Author: Lance Albertson <lance@osuosl.org>
+Date:   Fri Sep 3 14:11:40 2010 -0700
+
+    Allow KVM to boot from HTTP
+    
+    New versions of KVM support booting from HTTP-hosted ISO images, via libcurl.
+    This patch adds a proper check to allow defining either a sane, absolute path
+    or an HTTP URL as an iso image path.
+
+diff --git a/lib/hypervisor/hv_base.py b/lib/hypervisor/hv_base.py
+index 80675ee..cd4ad99 100644
+--- a/lib/hypervisor/hv_base.py
++++ b/lib/hypervisor/hv_base.py
+@@ -62,6 +62,12 @@ def _IsCpuMaskWellFormed(cpu_mask):
+ _FILE_CHECK = (utils.IsNormAbsPath, "must be an absolute normalized path",
+               os.path.isfile, "not found or not a file")
+ 
++# must be a file or an HTTP URL
++_FILE_OR_URL_CHECK = (utils.IsNormAbsPathOrURL,
++                      "must be an absolute normalized path or an HTTP URL",
++                      lambda x: os.path.isfile(x) or x.startswith('http://'),
++                      "not found or not a file or URL")
++
+ # must be a directory
+ _DIR_CHECK = (utils.IsNormAbsPath, "must be an absolute normalized path",
+              os.path.isdir, "not found or not a directory")
+@@ -75,6 +81,8 @@ _CPU_MASK_CHECK = (_IsCpuMaskWellFormed,
+ # nice wrappers for users
+ REQ_FILE_CHECK = (True, ) + _FILE_CHECK
+ OPT_FILE_CHECK = (False, ) + _FILE_CHECK
++REQ_FILE_OR_URL_CHECK = (True, ) + _FILE_OR_URL_CHECK
++OPT_FILE_OR_URL_CHECK = (False, ) + _FILE_OR_URL_CHECK
+ REQ_DIR_CHECK = (True, ) + _DIR_CHECK
+ OPT_DIR_CHECK = (False, ) + _DIR_CHECK
+ NET_PORT_CHECK = (True, lambda x: x > 0 and x < 65535, "invalid port number",
+diff --git a/lib/hypervisor/hv_kvm.py b/lib/hypervisor/hv_kvm.py
+index c849dba..1ff8890 100644
+--- a/lib/hypervisor/hv_kvm.py
++++ b/lib/hypervisor/hv_kvm.py
+@@ -182,7 +182,7 @@ class KVMHypervisor(hv_base.BaseHypervisor):
+     constants.HV_VNC_X509: hv_base.OPT_DIR_CHECK,
+     constants.HV_VNC_X509_VERIFY: hv_base.NO_CHECK,
+     constants.HV_VNC_PASSWORD_FILE: hv_base.OPT_FILE_CHECK,
+-    constants.HV_CDROM_IMAGE_PATH: hv_base.OPT_FILE_CHECK,
++    constants.HV_CDROM_IMAGE_PATH: hv_base.OPT_FILE_OR_URL_CHECK,
+     constants.HV_BOOT_ORDER:
+       hv_base.ParamInSet(True, constants.HT_KVM_VALID_BO_TYPES),
+     constants.HV_NIC_TYPE:
+@@ -539,7 +539,9 @@ class KVMHypervisor(hv_base.BaseHypervisor):
+ 
+     iso_image = hvp[constants.HV_CDROM_IMAGE_PATH]
+     if iso_image:
+-      options = ',format=raw,media=cdrom'
++      options = ',media=cdrom'
++      if not iso_image.startswith('http://'):
++        options = "%s,format=raw" % options
+       if boot_cdrom:
+         kvm_cmd.extend(['-boot', 'd'])
+         if disk_type != constants.HT_DISK_IDE:
+diff --git a/lib/utils.py b/lib/utils.py
+index 441e5bb..41cb0fe 100644
+--- a/lib/utils.py
++++ b/lib/utils.py
+@@ -2562,6 +2562,13 @@ def PathJoin(*args):
+                      " (%s != %s)" % (prefix, root))
+   return result
+ 
++def IsNormAbsPathOrURL(path):
++  """Check whether a path is absolute and normalized, or
++  an HTTP URL.
++
++  """
++  return IsNormAbsPath(path) or path.startswith('http://')
++
+ 
+ def TailFile(fname, lines=20):
+   """Return the last lines from a file.
