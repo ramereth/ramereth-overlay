@@ -1,6 +1,10 @@
 # ChangeLog for media-sound/pianobar
-# Copyright 1999-2009 Gentoo Foundation; Distributed under the GPL v2
+# Copyright 1999-2010 Gentoo Foundation; Distributed under the GPL v2
 # $Header: $
+
+  14 Nov 2010; Lance Albertson <ramereth@gentoo.org> pianobar-9999.ebuild,
+  metadata.xml:
+  Update to use gmake
 
   25 Aug 2009; Lance Albertson <ramereth@gentoo.org> pianobar-9999.ebuild,
   +metadata.xml:

@@ -1,6 +1,8 @@
-# Copyright 1999-2009 Gentoo Foundation
+# Copyright 1999-2010 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header:$
+
+EAPI=3
 
 inherit git
 
@@ -12,27 +14,33 @@ EGIT_REPO_URI="git://github.com/PromyLOPh/pianobar.git"
 LICENSE="as-is"
 SLOT="0"
 KEYWORDS="~amd64 ~x86"
-IUSE="alsa esd pulseaudio"
+IUSE="alsa esd pulseaudio +mad +faad"
 
-DEPEND="dev-util/cmake
-	media-libs/libao
+DEPEND="media-libs/libao
 	net-misc/curl
-	media-libs/faad2
-	media-libs/libmad
+	faad? ( media-libs/faad2 )
+	mad? ( media-libs/libmad )
 	dev-libs/libxml2"
 
 RDEPEND="alsa? ( media-libs/alsa-lib )
 	esd? ( media-sound/esound )
 	pulseaudio? ( media-sound/pulseaudio )"
 
+src_prepare() {
+	sed -i -e 's/^PREFIX.*/PREFIX\:=\/usr/g' Makefile
+}
+
 src_compile() {
-	cmake \
-	  -DCMAKE_INSTALL_PREFIX=/usr \
-	  . || die "cmake failed"
-	  emake || die "emake failed."
+	local make_opts=""
+	use mad && make_opts="$make_opts DISABLE_MAD=1"
+	use faad && make_opts="$make_opts DISABLE_FAAD=1"
+
+	emake ${make_opts} || die "emake failed."
 }
 
 src_install() {
 	emake DESTDIR="${D}" install || die "emake install failed."
-	dodoc AUTHORS README
+	dodoc AUTHORS README INSTALL
+	docinto contrib
+	dodoc contrib/*
 }
