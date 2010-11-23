@@ -3,6 +3,10 @@
 # $Header: $
 
   23 Nov 2010; Lance Albertson <ramereth@gentoo.org>
+  ganeti-instance-image-9999.ebuild:
+  Update homepage & git URL
+
+  23 Nov 2010; Lance Albertson <ramereth@gentoo.org>
   -ganeti-instance-image-0.3.ebuild, -ganeti-instance-image-0.3.1.ebuild,
   -ganeti-instance-image-0.4.ebuild:
   cleanup

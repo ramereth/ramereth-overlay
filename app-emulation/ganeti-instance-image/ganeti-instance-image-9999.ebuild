@@ -7,7 +7,7 @@ EAPI=2
 inherit eutils
 
 if [[ ${PV} == "9999" ]]; then
-	EGIT_REPO_URI="git://git.osuosl.org/${PN}.git"
+	EGIT_REPO_URI="git://git.osuosl.org/gitolite/ganeti/${PN}"
 	EGIT_BRANCH="master"
 	inherit git autotools
 else
@@ -15,7 +15,7 @@ else
 fi
 
 DESCRIPTION="Scripts to build out CD or image based VMs using Ganeti"
-HOMEPAGE="http://trac.osuosl.org/ganeti-instance-image"
+HOMEPAGE="http://code.osuosl.org/projects/ganeti-image"
 
 LICENSE="GPL-2"
 SLOT="0"
