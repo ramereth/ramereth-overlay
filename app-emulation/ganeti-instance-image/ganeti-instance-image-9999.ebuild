@@ -37,7 +37,7 @@ src_prepare() {
 }
 
 src_configure() {
-	econf --with-defaults-dir=/etc/ganeti
+	econf --with-default-dir=/etc/ganeti
 }
 
 src_install() {
