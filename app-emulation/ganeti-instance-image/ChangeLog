@@ -2,6 +2,11 @@
 # Copyright 1999-2010 Gentoo Foundation; Distributed under the GPL v2
 # $Header: $
 
+  23 Nov 2010; Lance Albertson <ramereth@gentoo.org>
+  -ganeti-instance-image-0.3.ebuild, -ganeti-instance-image-0.3.1.ebuild,
+  -ganeti-instance-image-0.4.ebuild:
+  cleanup
+
 *ganeti-instance-image-0.4 (07 May 2010)
 
   07 May 2010; Lance Albertson <ramereth@gentoo.org>
