@@ -1,4 +1,4 @@
-# Copyright 1999-2010 Gentoo Foundation
+# Copyright 1999-2011 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
@@ -10,16 +10,16 @@ inherit ruby-ng
 
 DESCRIPTION="Framework to build server orchestration or parallel job execution
 systems"
-HOMEPAGE="http://code.google.com/p/mcollective/"
-SRC_URI="http://mcollective.googlecode.com/files/${P}.tgz"
+HOMEPAGE="http://marionette-collective.org/"
+SRC_URI="http://puppetlabs.com/downloads/mcollective/${P}.tgz"
 
 LICENSE="Apache-2.0"
 SLOT="0"
 KEYWORDS="~x86 ~amd64"
-IUSE="doc"
+IUSE="doc +client"
 
 DEPEND=""
-RDEPEND="=dev-ruby/stomp-1.1"
+RDEPEND="dev-ruby/stomp"
 
 src_compile() {
 	einfo "nothing to compile"
@@ -29,12 +29,15 @@ each_ruby_install() {
 	doruby -r lib/*
 	insinto /usr/share/mcollective
 	doins -r plugins
-	insinto /etc/mcollective
-	dosbin mc-*
+	use client && dosbin mc-*
 	newsbin mcollectived.rb mcollectived
-	use doc && dohtml -r doc/*
-	dodoc changelog activemq.xml.templ
+	if use doc ; then
+		dohtml -r doc/*
+		insinto /usr/share/doc/${P}/ext
+		doins -r ext/*
+	fi
 	newinitd "${FILESDIR}"/mcollectived.initd mcollectived
+	insinto /etc/mcollective
 	cd etc
 	for cfg in *.dist ; do
 		newins "${cfg}" "${cfg%%.dist}"
