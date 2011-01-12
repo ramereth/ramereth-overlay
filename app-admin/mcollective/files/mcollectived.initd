@@ -1,9 +1,9 @@
 #!/sbin/runscript
-# Copyright 1999-2010 Gentoo Foundation
+# Copyright 1999-2011 Gentoo Foundation
 # Distributed under the terms of the GNU General Public License v2
 # $Header: $
 
-mcollectived="/usr/bin/ruby /usr/sbin/mcollectived"
+mcollectived="/usr/sbin/mcollectived"
 pidfile="/var/run/mcollectived"
 
 depend() {
@@ -12,14 +12,13 @@ depend() {
 
 start() {
     ebegin "Starting mcollectived"
-    start-stop-daemon --start --quiet --exec ${mcollectived} -- \
-        --pid=${pidfile} --config="/etc/mcollective/server.cfg"
+    ${mcollectived} --pid=${pidfile} --config="/etc/mcollective/server.cfg"
     eend $?
 }
 
 stop() {
     ebegin "Stopping mcollectived"
-    start-stop-daemon --stop --quiet --pidfile ${pidfile}
+    kill `cat ${pidfile}`
     eend $?
 }
 
