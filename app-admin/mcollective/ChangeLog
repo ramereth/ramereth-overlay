@@ -2,6 +2,13 @@
 # Copyright 1999-2011 Gentoo Foundation; Distributed under the GPL v2
 # $Header: $
 
+*mcollective-1.0.1 (01 Mar 2011)
+
+  01 Mar 2011; Lance Albertson <ramereth@gentoo.org>
+  -mcollective-0.4.9.ebuild, -mcollective-1.0.0.ebuild,
+  +mcollective-1.0.1.ebuild:
+  Version bump/cleanup
+
   12 Jan 2011; Lance Albertson <ramereth@gentoo.org>
   files/mcollectived.initd:
   Fix init script to work properly.
