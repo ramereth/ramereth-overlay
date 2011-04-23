@@ -40,15 +40,19 @@ DEPEND="xen? ( >=app-emulation/xen-3.0 )
 	drbd? ( >=sys-cluster/drbd-8.3 )
 	ipv6? ( net-misc/ndisc6 )
 	htools? (
-		dev-lang/ghc
+		>=dev-lang/ghc-6.10
 		dev-haskell/json
 		dev-haskell/curl
 		dev-haskell/network
+		|| (
+			dev-haskell/parallel:1
+			dev-haskell/parallel:2
+			)
 		dev-haskell/parallel )
 	dev-libs/openssl
 	dev-python/paramiko
 	dev-python/pyopenssl
-	dev-python/pyparsing
+	>=dev-python/pyparsing-1.4.6
 	dev-python/pycurl
 	dev-python/pyinotify
 	dev-python/simplejson
