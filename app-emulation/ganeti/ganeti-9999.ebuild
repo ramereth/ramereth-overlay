@@ -30,12 +30,13 @@ HOMEPAGE="http://code.google.com/p/ganeti/"
 
 LICENSE="GPL-2"
 SLOT="0"
-IUSE="kvm xen drbd +filestorage sharedstorage htools syslog ipv6"
+IUSE="kvm xen lxc drbd +filestorage sharedstorage htools syslog ipv6"
 
 S="${WORKDIR}/${MY_P}"
 
 DEPEND="xen? ( >=app-emulation/xen-3.0 )
 	kvm? ( app-emulation/qemu-kvm )
+	lxc? ( app-emulation/lxc )
 	drbd? ( >=sys-cluster/drbd-8.3 )
 	ipv6? ( net-misc/ndisc6 )
 	htools? (
@@ -63,7 +64,7 @@ RDEPEND="${DEPEND}
 	!app-emulation/ganeti-htools"
 
 pkg_setup () {
-	confutils_require_any kvm xen
+	confutils_require_any kvm xen lxc
 }
 
 src_unpack() {
