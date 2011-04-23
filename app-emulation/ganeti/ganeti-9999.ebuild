@@ -10,6 +10,13 @@ if [[ ${PV} == "9999" ]] ; then
 	EGIT_REPO_URI="git://git.ganeti.org/ganeti.git"
 	inherit git
 	KEYWORDS=""
+	# you will need to pull in the haskell overlay for pandoc
+	GIT_DEPEND="app-text/pandoc
+		dev-python/docutils
+		dev-python/sphinx
+		media-libs/gd[fontconfig,jpeg,png,truetype]
+		media-gfx/graphviz
+		media-fonts/urw-fonts"
 else
 	SRC_URI="http://ganeti.googlecode.com/files/${MY_P}.tar.gz"
 	KEYWORDS="~amd64 ~x86"
@@ -50,7 +57,8 @@ DEPEND="xen? ( >=app-emulation/xen-3.0 )
 	net-misc/openssh
 	net-misc/socat
 	sys-apps/iproute2
-	sys-fs/lvm2"
+	sys-fs/lvm2
+	${GIT_DEPEND}"
 RDEPEND="${DEPEND}
 	!app-emulation/ganeti-htools"
 
@@ -112,7 +120,7 @@ src_install () {
 
 	keepdir /var/{lib,log,run}/ganeti/
 	keepdir /usr/share/ganeti/os/
-	keepdir /var/lib/ganeti-storage/{export,file}/
+	keepdir /var/lib/ganeti-storage/{export,file,shared}/
 }
 
 pkg_postinst () {
