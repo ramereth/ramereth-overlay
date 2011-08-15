@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 # $Header: /var/cvsroot/gentoo-x86/app-emulation/ganeti/ganeti-2.4.1.ebuild,v 1.1 2011/03/09 18:20:00 ramereth Exp $
 
-EAPI="3"
+EAPI="4"
 
 inherit eutils confutils bash-completion
 
@@ -63,6 +63,7 @@ DEPEND="xen? ( >=app-emulation/xen-3.0 )
 	net-misc/socat
 	sys-apps/iproute2
 	sys-fs/lvm2
+	>=sys-apps/baselayout-2.0
 	${GIT_DEPEND}"
 RDEPEND="${DEPEND}
 	!app-emulation/ganeti-htools"
